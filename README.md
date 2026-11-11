@@ -6,6 +6,17 @@ Includes real-time streaming of thinking tokens, local file editing tools, integ
 
 ---
 
+> [!CAUTION]
+> ### Cloud Credits & Usage Warning
+> This application connects directly to Google Cloud Vertex AI using your credentials. Deep reasoning tokens, large code context windows, and autonomous multi-step tool executions consume Google Cloud billing credits and API quotas.
+>
+> **Unmonitored usage can result in high costs.**
+>
+> - **Monitor Regularly**: Always check your remaining credits and live charges frequently in the [Google Cloud Billing Console](https://console.cloud.google.com/billing) (or click the **Credits** link in the app's bottom-left sidebar) to make sure you do not exceed what you have.
+> - **Set Budget Alerts**: It is strongly recommended to set up [Billing Budget Alerts](https://cloud.google.com/billing/docs/how-to/budgets) in Google Cloud to automatically notify you before your credits run out or unexpected charges occur.
+
+---
+
 ## Prerequisites
 
 1. **Python 3.10 or higher**: [python.org/downloads](https://www.python.org/downloads/)
