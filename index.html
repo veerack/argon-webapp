@@ -1,0 +1,2443 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini 4 · Argon & Carbon Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0c0d11',
+            sidebar: '#090a0d',
+            surface: '#12131b',
+            surfaceHover: '#1a1c27',
+            border: '#1c1e2a',
+            borderLight: '#262939',
+            argon: '#10b981',
+            carbon: '#06b6d4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0c0d11;
+      color: #e4e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #262938; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #393e54; }
+
+    .prose-custom { color: #dce1e8; line-height: 1.65; font-size: 0.95rem; }
+    .prose-custom p { margin-bottom: 0.75rem; }
+    .prose-custom p:last-child { margin-bottom: 0; }
+    .prose-custom h1, .prose-custom h2, .prose-custom h3, .prose-custom h4 {
+      font-weight: 600; color: #f3f5f8; margin-top: 1.25rem; margin-bottom: 0.5rem;
+    }
+    .prose-custom h1 { font-size: 1.4rem; }
+    .prose-custom h2 { font-size: 1.2rem; }
+    .prose-custom h3 { font-size: 1.05rem; }
+    .prose-custom ul, .prose-custom ol { margin-left: 1.3rem; margin-bottom: 0.75rem; }
+    .prose-custom ul { list-style-type: disc; }
+    .prose-custom ol { list-style-type: decimal; }
+    .prose-custom li { margin-bottom: 0.25rem; }
+    .prose-custom code:not(pre code) {
+      background: #1e212b;
+      color: #38bdf8;
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.35rem;
+      font-size: 0.85rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .prose-custom pre {
+      background: #111218 !important;
+      border: 1px solid #232635;
+      border-radius: 0.65rem;
+      margin: 0.85rem 0;
+      overflow-x: auto;
+      padding: 2.2rem 1rem 0.85rem 1rem;
+      position: relative;
+    }
+    .prose-custom pre code {
+      font-size: 0.84rem;
+      line-height: 1.5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .prose-custom table {
+      width: 100%; border-collapse: collapse; margin: 0.85rem 0; font-size: 0.875rem;
+    }
+    .prose-custom th, .prose-custom td {
+      border: 1px solid #242738; padding: 0.5rem 0.75rem; text-align: left;
+    }
+    .prose-custom th { background: #151720; font-weight: 600; color: #f1f5f9; }
+    .prose-custom tr:nth-child(even) { background: #101117; }
+    .prose-custom blockquote {
+      border-left: 3px solid #3b82f6;
+      padding-left: 0.85rem;
+      color: #9aa2b1;
+      margin: 0.85rem 0;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(0.9); opacity: 0.4; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+    .thinking-dot { animation: pulse-dot 1.4s infinite ease-in-out; }
+
+    .code-toolbar {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      z-index: 10;
+    }
+    .code-action-btn {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.72rem;
+      background: #1f2330;
+      color: #94a3b8;
+      border: 1px solid #2e3347;
+      border-radius: 0.35rem;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .code-action-btn:hover {
+      background: #2b3042;
+      color: #ffffff;
+    }
+    .code-action-btn.applied {
+      background: #064e3b;
+      color: #34d399;
+      border-color: #059669;
+    }
+    .code-file-tag {
+      position: absolute;
+      top: 0.35rem;
+      left: 0.75rem;
+      font-size: 0.72rem;
+      font-family: ui-monospace, monospace;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased overflow-hidden select-none">
+
+  <div class="flex h-full w-full overflow-hidden">
+            <!-- Left Sidebar (Antigravity Style) -->
+    <aside id="sidebar" class="w-64 bg-[#090a0d] border-r border-[#171922] flex flex-col transition-all duration-200 z-30 shrink-0">
+      
+      <!-- Top Actions: New Chat & Search -->
+      <div class="p-3 pb-2 border-b border-[#171922]">
+        <div class="flex items-center gap-2">
+          <button id="newChatBtn" type="button" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-zinc-700/60 hover:bg-white/5 text-zinc-200 text-xs font-medium transition shadow-sm group">
+            <svg class="w-4 h-4 text-zinc-400 group-hover:text-white transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Conversation</span>
+          </button>
+          <button id="toggleSidebarBtn" type="button" title="Collapse sidebar" class="p-2 rounded-xl border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white hover:bg-white/5 transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="mt-2.5">
+          <input id="chatSearchInput" type="text" placeholder="Filter conversations..." class="w-full bg-[#111219] border border-[#1d202d] focus:border-zinc-500 rounded-lg text-xs px-2.5 py-1.5 text-zinc-200 placeholder-zinc-500 outline-none transition font-sans">
+        </div>
+      </div>
+
+      <!-- Conversations Section Header -->
+      <div class="px-3 pt-3 pb-1 flex items-center justify-between text-[11px] font-medium text-zinc-500">
+        <span>Conversations</span>
+      </div>
+
+      <!-- Chat History List -->
+      <div class="flex-1 overflow-y-auto px-1.5 py-1 space-y-0.5" id="conversationsList">
+        <!-- Dynamically rendered chat items -->
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="p-3 border-t border-[#171922] bg-[#090a0d] text-xs text-zinc-400 flex items-center justify-between">
+        <button id="settingsBtn" type="button" class="flex items-center gap-2 hover:text-white cursor-pointer transition py-1 px-1.5 rounded-lg hover:bg-white/5 text-xs text-zinc-400">
+          <svg class="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+        <a id="creditsBtn" href="https://console.cloud.google.com/billing" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-2 py-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition font-sans text-xs group" title="Open Google Cloud Billing to view remaining credits">
+          <span>Credits</span>
+          <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full bg-bg relative min-w-0">
+      
+      <!-- Top Bar -->
+      <header class="h-12 border-b border-border flex items-center justify-between px-4 bg-bg/80 backdrop-blur z-10 shrink-0">
+        <div class="flex items-center gap-3">
+          <button id="openSidebarBtn" class="hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-surface transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
+          <div class="flex items-center gap-2">
+            <h1 id="activeChatTitle" class="text-sm font-medium text-white truncate max-w-md cursor-pointer hover:text-zinc-300 transition" title="Click to rename">
+              New chat
+            </h1>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Terminal Trigger Button -->
+          <button id="terminalToggleBtn" title="Open Integrated Terminal (PowerShell / VPS)" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-border text-xs text-zinc-300 font-mono text-[11px] transition">
+            <span class="text-emerald-400 font-bold">&gt;_</span>
+            <span>Terminal</span>
+          </button>
+
+          <!-- Workspace Mounted Indicator Pill -->
+          <button id="workspaceIndicatorPill" type="button" onclick="openWorkspaceModal()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#14161f] hover:bg-[#1a1d28] border border-border text-xs text-zinc-300 font-mono text-[11px] transition" title="Workspace Folder">
+            <span id="workspaceStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span id="workspaceIndicatorLabel">Workspace</span>
+          </button>
+
+          <!-- Active Model Indicator -->
+          <div id="topModelIndicator" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-xs text-zinc-300">
+            <span id="topModelDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span id="topModelName" class="font-medium">Argon</span>
+          </div>
+
+          <!-- Clear messages button -->
+          <button id="clearChatBtn" title="Clear current chat" class="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-surface transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages View -->
+      <div id="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 select-text">
+        <div class="max-w-3xl mx-auto space-y-6" id="messagesList">
+          <!-- Load Earlier Messages Button (Pagination) -->
+          <div id="loadEarlierContainer" class="hidden text-center py-2">
+            <button id="loadEarlierBtn" class="px-4 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-border text-xs text-zinc-400 hover:text-zinc-200 transition">
+              Load earlier messages
+            </button>
+          </div>
+
+          <!-- Welcome Empty State -->
+          <div id="emptyState" class="py-24 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-[#13151f] border border-[#222534] flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4771 12 22C12 16.4771 16.4771 12 22 12C16.4771 12 12 7.52285 12 2Z" fill="url(#geminiLogoGrad)"/>
+                <defs>
+                  <linearGradient id="geminiLogoGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#4E82EE"/>
+                    <stop offset="0.5" stop-color="#A56FF8"/>
+                    <stop offset="1" stop-color="#DF6589"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h2 class="text-lg font-medium text-white mb-1.5">Gemini 4 Studio</h2>
+            <p class="text-sm text-zinc-400 max-w-sm mx-auto">Argon and Carbon reasoning for <span id="emptyStateWorkspaceLabel" class="font-mono text-emerald-400">workspace</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input Area (Floating Antigravity Style) -->
+      <div class="px-4 pb-4 shrink-0">
+        <div class="max-w-3xl mx-auto">
+          
+          <div class="bg-[#12131b] border border-[#222432] focus-within:border-zinc-500/80 rounded-2xl shadow-2xl transition relative">
+            
+            <!-- Attached Files Preview Bar -->
+            <div id="attachmentsPreview" class="hidden px-3 pt-2.5 flex flex-wrap gap-2 border-b border-[#1c1e2a] pb-2 bg-[#0e0f16]">
+              <!-- Dynamically populated attachment chips -->
+            </div>
+
+            <!-- Textarea -->
+            <div class="px-3.5 pt-3 pb-1">
+              <textarea
+                id="messageInput"
+                rows="1"
+                placeholder="Ask anything, @ to mention, / for actions"
+                class="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 resize-none outline-none max-h-48 leading-relaxed font-sans"
+                style="height: 28px;"
+              ></textarea>
+            </div>
+
+            <!-- Bottom Toolbar inside Chatbox -->
+            <div class="px-3 pb-2.5 pt-1 flex items-center justify-between">
+              
+              <!-- Left Toolbar: + File, Model Dropdown (Gemini 4 Argon High ^), Thinking Level, Workspace -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                
+                <!-- + File Attachment Button -->
+                <button id="attachBtn" type="button" title="Attach files or paste images (Ctrl+V)" class="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <input id="fileInput" type="file" multiple class="hidden" accept=".ts,.tsx,.js,.jsx,.py,.json,.html,.css,.md,.txt,.sh,.sql,.png,.jpg,.jpeg,.webp">
+
+                <!-- Model Selector Dropdown: "Gemini 4 Argon High ^" -->
+                <div class="relative">
+                  <button id="modelDropdownBtn" type="button" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-zinc-300 hover:text-white hover:bg-white/5 transition font-medium">
+                    <span id="modelBtnDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span id="modelBtnLabel">Gemini 4 Argon</span>
+                    <svg class="w-3 h-3 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <div id="modelDropdownMenu" class="hidden absolute bottom-full mb-2 left-0 w-48 bg-[#181a24] border border-[#262836] rounded-xl shadow-2xl p-1 z-50 text-xs">
+                    <button type="button" data-model="gemini-4-argon" class="model-option w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left hover:bg-white/5 text-zinc-200 hover:text-white transition">
+                      <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="font-medium">Argon</span>
+                      </div>
+                      <span class="text-[10px] text-zinc-500">Reasoning</span>
+                    </button>
+                    <button type="button" data-model="gemini-4-carbon" class="model-option w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left hover:bg-white/5 text-zinc-200 hover:text-white transition">
+                      <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                        <span class="font-medium">Carbon</span>
+                      </div>
+                      <span class="text-[10px] text-zinc-500">Security</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Thinking Level Dropdown -->
+                <div class="relative">
+                  <button id="thinkingDropdownBtn" type="button" class="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition">
+                    <span id="thinkingBtnLabel">High</span>
+                    <svg class="w-3 h-3 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <div id="thinkingDropdownMenu" class="hidden absolute bottom-full mb-2 left-0 w-28 bg-[#181a24] border border-[#262836] rounded-xl shadow-2xl p-1 z-50 text-xs">
+                    <button type="button" data-level="high" class="thinking-option w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-zinc-200 hover:text-white transition">High</button>
+                    <button type="button" data-level="low" class="thinking-option w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-zinc-200 hover:text-white transition">Low</button>
+                    <button type="button" data-level="off" class="thinking-option w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-zinc-200 hover:text-white transition">Off</button>
+                  </div>
+                </div>
+
+                <!-- Workspace Browser Button -->
+                <button id="workspacePickerBtn" type="button" title="Browse and attach workspace files" class="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition font-sans">
+                  <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  <span>Workspace</span>
+                </button>
+
+                <!-- Tools Active / Off Toggle Button -->
+                <button id="toolsToggleBtn" type="button" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-xs text-emerald-400 transition" title="Toggle autonomous tools">
+                  <span id="toolsToggleDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span id="toolsToggleLabel">Tools Active</span>
+                </button>
+
+              </div>
+
+              <!-- Right Toolbar: Circular Blue Send Button -->
+              <div class="flex items-center gap-2">
+
+                <!-- Circular Blue Send Button (Image 2) -->
+                <button
+                  id="sendBtn"
+                  type="button"
+                  title="Send message (Enter)"
+                  class="w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed shadow-md"
+                  disabled
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                <!-- Stop Button -->
+                <button
+                  id="stopBtn"
+                  type="button"
+                  title="Stop generation"
+                  class="hidden w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center transition shadow-md"
+                >
+                  <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
+                  </svg>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="mt-2 text-center text-[11px] text-zinc-600">
+            Shift + Enter for new line · Direct workspace access
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Workspace File Picker Modal -->
+  <div id="workspaceModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-surface border border-borderLight rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+      <div class="p-3.5 border-b border-border flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+          <span id="workspaceModalTitle" class="text-sm font-medium text-white">Workspace Files</span>
+        </div>
+        <button id="closeWorkspaceModalBtn" class="p-1 rounded text-zinc-400 hover:text-white transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-3 border-b border-border">
+        <input id="workspaceSearchInput" type="text" placeholder="Filter files (e.g. security, audio, dashboard)..." class="w-full bg-[#101116] border border-border focus:border-emerald-500 rounded-xl text-xs px-3 py-2 text-zinc-200 placeholder-zinc-500 outline-none transition">
+      </div>
+      <div id="workspaceFilesList" class="flex-1 overflow-y-auto p-2 space-y-0.5 text-xs font-mono">
+        <div class="p-4 text-center text-zinc-500">Loading files...</div>
+      </div>
+      <div class="p-2.5 border-t border-border bg-[#101116] text-[11px] text-zinc-500 flex justify-between items-center">
+        <span>Click any file to attach its live content to the chat</span>
+        <span id="workspaceFileCount">0 files</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio Settings Modal -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-surface border border-borderLight rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+      <!-- Header -->
+      <div class="p-4 border-b border-border flex items-center justify-between bg-[#12141c]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300">
+            <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">Studio Settings</h3>
+            <p class="text-[11px] text-zinc-400">Configure your Google Cloud / Vertex AI credentials and workspace folder.</p>
+          </div>
+        </div>
+        <button id="closeSettingsModalBtn" class="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/5 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-5 text-xs select-text">
+        
+        <!-- Provider Mode Selection -->
+        <div class="space-y-2">
+          <label class="block text-zinc-300 font-medium text-xs">AI Provider &amp; Authentication</label>
+          <div class="grid grid-cols-2 gap-2 bg-[#0d0f16] p-1 rounded-xl border border-border">
+            <button type="button" id="authModeVertexBtn" class="py-2 px-3 rounded-lg text-xs font-medium transition text-center bg-white/10 text-white shadow-sm" onclick="setAuthModeTab('vertex')">
+              Vertex AI (Google Cloud)
+            </button>
+            <button type="button" id="authModeApiKeyBtn" class="py-2 px-3 rounded-lg text-xs font-medium transition text-center text-zinc-400 hover:text-white" onclick="setAuthModeTab('api_key')">
+              Gemini API Key
+            </button>
+          </div>
+        </div>
+
+        <!-- Vertex AI Fields -->
+        <div id="vertexFieldsGroup" class="space-y-3 bg-[#0d0f16] p-3.5 rounded-xl border border-border/80">
+          <div>
+            <label class="block text-zinc-300 font-medium mb-1">Google Cloud Project ID</label>
+            <input id="settingGcpProject" type="text" placeholder="e.g. my-gemini-project-123456" class="w-full bg-[#141620] border border-border focus:border-zinc-500 rounded-lg px-3 py-2 text-zinc-200 placeholder-zinc-500 font-mono text-xs outline-none transition">
+            <span class="block mt-1 text-[11px] text-zinc-500">Your Google Cloud project with Vertex AI API enabled.</span>
+          </div>
+          <div>
+            <label class="block text-zinc-300 font-medium mb-1">Vertex AI Region / Location</label>
+            <input id="settingGcpLocation" type="text" placeholder="global" class="w-full bg-[#141620] border border-border focus:border-zinc-500 rounded-lg px-3 py-2 text-zinc-200 placeholder-zinc-500 font-mono text-xs outline-none transition">
+            <span class="block mt-1 text-[11px] text-zinc-500">Default: <code class="text-zinc-400">global</code> (or e.g. <code class="text-zinc-400">us-central1</code>).</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-300 leading-relaxed">
+            <strong>Vertex AI Auth:</strong> Uses Application Default Credentials (<code class="text-white">gcloud auth application-default login</code>) or active service account keys on this machine.
+          </div>
+        </div>
+
+        <!-- API Key Fields -->
+        <div id="apiKeyFieldsGroup" class="hidden space-y-3 bg-[#0d0f16] p-3.5 rounded-xl border border-border/80">
+          <div>
+            <label class="block text-zinc-300 font-medium mb-1">Gemini API Key</label>
+            <div class="relative">
+              <input id="settingApiKey" type="password" placeholder="AIzaSy..." class="w-full bg-[#141620] border border-border focus:border-zinc-500 rounded-lg px-3 py-2 pr-10 text-zinc-200 placeholder-zinc-500 font-mono text-xs outline-none transition">
+              <button type="button" id="toggleApiKeyVisibilityBtn" class="absolute right-2 top-2 p-1 text-zinc-500 hover:text-zinc-300 transition">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
+            <span class="block mt-1 text-[11px] text-zinc-500">API Key obtained from Google AI Studio. Note that experimental Gemini 4 models (Argon &amp; Carbon) are hosted primarily on Vertex AI.</span>
+          </div>
+        </div>
+
+        <!-- Workspace Directory -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-zinc-300 font-medium text-xs">Local Workspace Directory</label>
+            <span id="workspacePathValidationBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">validating...</span>
+          </div>
+          <input id="settingWorkspaceRoot" type="text" placeholder="e.g. C:\Users\name\projects\myapp or /path/to/project" class="w-full bg-[#0d0f16] border border-border focus:border-zinc-500 rounded-lg px-3 py-2 text-zinc-200 placeholder-zinc-500 font-mono text-xs outline-none transition">
+          <span class="block text-[11px] text-zinc-500">The local folder that Argon and Carbon have autonomous permissions to read, search, and edit.</span>
+        </div>
+
+        <!-- Remote SSH / Terminal Target (Optional) -->
+        <div class="space-y-3 pt-2 border-t border-border/60">
+          <label class="block text-zinc-300 font-medium text-xs">Optional Remote SSH Target (Terminal)</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 text-[11px] mb-1">SSH Host / Alias</label>
+              <input id="settingVpsTarget" type="text" placeholder="e.g. vps or user@host" class="w-full bg-[#0d0f16] border border-border focus:border-zinc-500 rounded-lg px-3 py-1.5 text-zinc-200 placeholder-zinc-500 font-mono text-xs outline-none transition">
+            </div>
+            <div>
+              <label class="block text-zinc-400 text-[11px] mb-1">Remote Directory</label>
+              <input id="settingVpsDir" type="text" placeholder="e.g. /home/user/project" class="w-full bg-[#0d0f16] border border-border focus:border-zinc-500 rounded-lg px-3 py-1.5 text-zinc-200 placeholder-zinc-500 font-mono text-xs outline-none transition">
+            </div>
+          </div>
+          <span class="block text-[11px] text-zinc-500">Leave blank if running terminal commands purely on the local machine.</span>
+        </div>
+
+        <!-- Custom Project Guidelines (Optional) -->
+        <div class="space-y-1.5 pt-2 border-t border-border/60">
+          <label class="block text-zinc-300 font-medium text-xs">Custom Architecture Guidelines (Optional)</label>
+          <textarea id="settingCustomInstruction" rows="3" placeholder="Provide extra instructions for Argon &amp; Carbon (e.g. tech stack, code formatting preferences, test commands)..." class="w-full bg-[#0d0f16] border border-border focus:border-zinc-500 rounded-lg p-2.5 text-zinc-200 placeholder-zinc-500 font-sans text-xs outline-none transition resize-none"></textarea>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 border-t border-border bg-[#10121a] flex items-center justify-between">
+        <span id="settingsFeedbackMsg" class="text-xs font-sans text-zinc-400 truncate max-w-xs"></span>
+        <div class="flex items-center gap-2">
+          <button id="cancelSettingsBtn" type="button" class="px-3 py-1.5 rounded-xl border border-zinc-700/80 hover:bg-white/5 text-zinc-300 hover:text-white transition text-xs">
+            Cancel
+          </button>
+          <button id="saveSettingsBtn" type="button" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium transition text-xs shadow-md">
+            Save Settings
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Integrated Terminal Modal -->
+  <div id="terminalModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-surface border border-borderLight rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col h-[75vh]">
+      <!-- Header -->
+      <div class="p-3.5 border-b border-border flex items-center justify-between bg-[#12141c]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-mono text-xs font-bold">
+            &gt;_
+          </div>
+          <div>
+            <span class="text-sm font-medium text-white">Integrated Terminal</span>
+            <span class="text-[11px] text-zinc-500 ml-2 font-mono">Autonomous Execution Engine</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Target Selector Pill -->
+          <div class="flex items-center p-0.5 bg-[#0e1017] rounded-lg border border-border text-xs font-mono">
+            <button id="targetLocalBtn" type="button" class="px-2.5 py-1 rounded-md text-[11px] bg-emerald-500/20 text-emerald-300 font-medium transition" onclick="setTerminalTarget('local')">Local (Windows V:\)</button>
+            <button id="targetVpsBtn" type="button" class="px-2.5 py-1 rounded-md text-[11px] text-zinc-400 hover:text-white transition" onclick="setTerminalTarget('vps')">VPS (Linux SSH)</button>
+          </div>
+          <button id="clearTerminalOutputBtn" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1d28] transition" title="Clear console">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+          <button id="closeTerminalModalBtn" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1d28] transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Command Chips -->
+      <div class="px-3.5 py-2 border-b border-border/60 bg-[#0e1017] flex items-center gap-1.5 overflow-x-auto text-[11px] font-mono text-zinc-400">
+        <span class="text-zinc-600 shrink-0 select-none">quick:</span>
+        <button class="px-2 py-0.5 rounded bg-[#161822] hover:bg-[#202434] hover:text-zinc-200 border border-border/80 transition" onclick="runQuickCommand('python --version')">python --version</button>
+        <button class="px-2 py-0.5 rounded bg-[#161822] hover:bg-[#202434] hover:text-zinc-200 border border-border/80 transition" onclick="runQuickCommand('dir')">dir</button>
+        <button class="px-2 py-0.5 rounded bg-[#161822] hover:bg-[#202434] hover:text-zinc-200 border border-border/80 transition" onclick="runQuickCommand('node --version')">node --version</button>
+        <button class="px-2 py-0.5 rounded bg-[#161822] hover:bg-[#202434] hover:text-zinc-200 border border-border/80 transition" onclick="runQuickCommand('npm test')">npm test</button>
+      </div>
+
+      <!-- Terminal Output Console -->
+      <div id="terminalConsoleOutput" class="flex-1 overflow-y-auto p-4 bg-[#08090d] font-mono text-xs text-zinc-300 leading-relaxed select-text space-y-2">
+        <div id="terminalGreetingMsg" class="text-zinc-500 italic">autonomous execution terminal initialized.
+target: local (PowerShell) &amp; remote (SSH if configured).
+note: git commands are strictly prohibited in this environment.</div>
+      </div>
+
+      <!-- Terminal Input Line -->
+      <div class="p-3 border-t border-border bg-[#101116] flex items-center gap-2">
+        <span id="terminalPromptPrefix" class="text-emerald-400 font-mono text-xs font-bold select-none">&gt;</span>
+        <input id="terminalCommandInput" type="text" placeholder="Type command... (e.g. python scripts/check-swc.js)" class="flex-1 bg-transparent border-0 font-mono text-xs text-zinc-100 placeholder-zinc-600 outline-none">
+        <button id="runTerminalCommandBtn" class="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs flex items-center gap-1.5 transition">
+          <span>Run</span>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentConversationId = null;
+    let currentModel = 'gemini-4-argon';
+    let currentThinkingLevel = 'high';
+    let toolsEnabled = true;
+    let conversations = [];
+    let activeMessages = [];
+    let visibleStartIndex = 0;
+    const PAGE_SIZE = 40;
+    let attachedFiles = [];
+    let isGenerating = false;
+    let activeAbortController = null;
+    let lastKnownMessageCount = 0;
+    let cachedWorkspaceFiles = [];
+
+    // Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const openSidebarBtn = document.getElementById('openSidebarBtn');
+    const conversationsList = document.getElementById('conversationsList');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const chatSearchInput = document.getElementById('chatSearchInput');
+    const activeChatTitle = document.getElementById('activeChatTitle');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messagesList = document.getElementById('messagesList');
+    const emptyState = document.getElementById('emptyState');
+    const loadEarlierContainer = document.getElementById('loadEarlierContainer');
+    const loadEarlierBtn = document.getElementById('loadEarlierBtn');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const attachBtn = document.getElementById('attachBtn');
+    const fileInput = document.getElementById('fileInput');
+    const attachmentsPreview = document.getElementById('attachmentsPreview');
+    const workspacePickerBtn = document.getElementById('workspacePickerBtn');
+    const workspaceModal = document.getElementById('workspaceModal');
+    const closeWorkspaceModalBtn = document.getElementById('closeWorkspaceModalBtn');
+    const workspaceSearchInput = document.getElementById('workspaceSearchInput');
+    const workspaceFilesList = document.getElementById('workspaceFilesList');
+    const workspaceFileCount = document.getElementById('workspaceFileCount');
+    const toolsToggleBtn = document.getElementById('toolsToggleBtn');
+    const toolsToggleLabel = document.getElementById('toolsToggleLabel');
+    const modelDropdownBtn = document.getElementById('modelDropdownBtn');
+    const modelDropdownMenu = document.getElementById('modelDropdownMenu');
+    const modelBtnLabel = document.getElementById('modelBtnLabel');
+    const modelBtnDot = document.getElementById('modelBtnDot');
+    const thinkingDropdownBtn = document.getElementById('thinkingDropdownBtn');
+    const thinkingDropdownMenu = document.getElementById('thinkingDropdownMenu');
+    const thinkingBtnLabel = document.getElementById('thinkingBtnLabel');
+    const topModelName = document.getElementById('topModelName');
+    const topModelDot = document.getElementById('topModelDot');
+
+    // Terminal State & Elements
+    let terminalTarget = 'local';
+    let terminalHistory = [];
+    let terminalHistoryIdx = -1;
+    const terminalToggleBtn = document.getElementById('terminalToggleBtn');
+    const terminalModal = document.getElementById('terminalModal');
+    const closeTerminalModalBtn = document.getElementById('closeTerminalModalBtn');
+    const clearTerminalOutputBtn = document.getElementById('clearTerminalOutputBtn');
+    const terminalConsoleOutput = document.getElementById('terminalConsoleOutput');
+    const terminalCommandInput = document.getElementById('terminalCommandInput');
+    const runTerminalCommandBtn = document.getElementById('runTerminalCommandBtn');
+    const targetLocalBtn = document.getElementById('targetLocalBtn');
+    const targetVpsBtn = document.getElementById('targetVpsBtn');
+    const terminalPromptPrefix = document.getElementById('terminalPromptPrefix');
+
+    // Marked & highlight.js
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+      },
+      breaks: true
+    });
+
+    function renderMarkdownSafely(text) {
+      if (!text) return '';
+      try {
+        return marked.parse(text);
+      } catch (e) {
+        console.error('Markdown rendering error:', e);
+        return `<div class="whitespace-pre-wrap">${escapeHtml(text)}</div>`;
+      }
+    }
+
+    function attachCodeBlockButtons(container) {
+      if (!container) return;
+      container.querySelectorAll('pre').forEach(pre => {
+        if (pre.querySelector('.code-toolbar')) return;
+
+        const codeElem = pre.querySelector('code');
+        if (!codeElem) return;
+
+        const codeText = codeElem.innerText;
+        let filePath = '';
+        const firstLine = codeText.split('\n')[0].trim();
+        const commentMatch = firstLine.match(/^\/\/\s*([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+)/);
+        if (commentMatch) {
+          filePath = commentMatch[1];
+        }
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'code-toolbar';
+
+        const applyBtn = document.createElement('button');
+        applyBtn.type = 'button';
+        applyBtn.className = 'code-action-btn';
+        applyBtn.title = 'Write directly to workspace file';
+        applyBtn.innerText = 'Apply';
+        applyBtn.onclick = () => {
+          let targetPath = filePath;
+          if (!targetPath) {
+            targetPath = prompt('Enter relative path inside workspace:');
+          }
+          if (!targetPath || !targetPath.trim()) return;
+          targetPath = targetPath.trim();
+
+          applyBtn.innerText = 'Writing...';
+          applyBtn.disabled = true;
+
+          fetch('/api/workspace/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: targetPath, content: codeText })
+          })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success) {
+              applyBtn.innerText = 'Applied';
+              applyBtn.classList.add('applied');
+              setTimeout(() => {
+                applyBtn.innerText = 'Apply';
+                applyBtn.classList.remove('applied');
+                applyBtn.disabled = false;
+              }, 2500);
+            } else {
+              alert('Error: ' + res.message);
+              applyBtn.innerText = 'Apply';
+              applyBtn.disabled = false;
+            }
+          })
+          .catch(err => {
+            alert('Network error: ' + err.message);
+            applyBtn.innerText = 'Apply';
+            applyBtn.disabled = false;
+          });
+        };
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'code-action-btn';
+        copyBtn.innerText = 'Copy';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(codeText).then(() => {
+            copyBtn.innerText = 'Copied!';
+            setTimeout(() => copyBtn.innerText = 'Copy', 1600);
+          });
+        };
+
+        toolbar.appendChild(applyBtn);
+        toolbar.appendChild(copyBtn);
+        pre.appendChild(toolbar);
+
+        if (filePath) {
+          const tag = document.createElement('div');
+          tag.className = 'code-file-tag';
+          tag.innerHTML = `<svg class="w-3 h-3 text-zinc-500 shrink-0 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg><span>${escapeHtml(filePath)}</span>`;
+          pre.appendChild(tag);
+        }
+      });
+    }
+
+    // Tools Toggle
+    const toolsToggleDot = document.getElementById('toolsToggleDot');
+    if (toolsToggleBtn) {
+      toolsToggleBtn.addEventListener('click', () => {
+        toolsEnabled = !toolsEnabled;
+        if (toolsEnabled) {
+          toolsToggleBtn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-xs text-emerald-400 transition';
+          if (toolsToggleLabel) toolsToggleLabel.innerText = 'Tools Active';
+          if (toolsToggleDot) toolsToggleDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+        } else {
+          toolsToggleBtn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-border text-xs text-zinc-400 transition';
+          if (toolsToggleLabel) toolsToggleLabel.innerText = 'Tools Off';
+          if (toolsToggleDot) toolsToggleDot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-500';
+        }
+      });
+    }
+
+    // Workspace File Picker Modal
+    workspacePickerBtn.addEventListener('click', openWorkspaceModal);
+    closeWorkspaceModalBtn.addEventListener('click', () => workspaceModal.classList.add('hidden'));
+    workspaceModal.addEventListener('click', (e) => {
+      if (e.target === workspaceModal) workspaceModal.classList.add('hidden');
+    });
+
+    async function openWorkspaceModal() {
+      workspaceModal.classList.remove('hidden');
+      workspaceSearchInput.focus();
+      if (cachedWorkspaceFiles.length === 0) {
+        try {
+          const res = await fetch('/api/workspace/files');
+          const data = await res.json();
+          cachedWorkspaceFiles = data.files || [];
+          workspaceFileCount.innerText = `${cachedWorkspaceFiles.length} files`;
+          renderWorkspaceFilesList();
+        } catch (err) {
+          workspaceFilesList.innerHTML = `<div class="p-4 text-center text-rose-400">Failed to load workspace files</div>`;
+        }
+      } else {
+        renderWorkspaceFilesList();
+      }
+    }
+
+    function renderWorkspaceFilesList() {
+      const q = workspaceSearchInput.value.toLowerCase().trim();
+      const filtered = cachedWorkspaceFiles.filter(f => f.toLowerCase().includes(q));
+      if (filtered.length === 0) {
+        workspaceFilesList.innerHTML = `<div class="p-4 text-center text-zinc-500">No matching files found</div>`;
+        return;
+      }
+
+      workspaceFilesList.innerHTML = filtered.map(f => `
+        <div onclick="selectWorkspaceFile('${escapeHtml(f)}')" class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-surfaceHover cursor-pointer text-zinc-300 hover:text-white transition">
+          <div class="flex items-center gap-2 truncate">
+            <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span class="truncate">${escapeHtml(f)}</span>
+          </div>
+          <span class="text-[10px] text-zinc-500 font-sans">Attach</span>
+        </div>
+      `).join('');
+    }
+
+    workspaceSearchInput.addEventListener('input', renderWorkspaceFilesList);
+
+    window.selectWorkspaceFile = async function(filePath) {
+      workspaceModal.classList.add('hidden');
+      try {
+        const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(filePath)}`);
+        const data = await res.json();
+        if (data.content !== undefined) {
+          attachedFiles.push({
+            name: filePath,
+            size: (data.length / 1024).toFixed(1) + ' KB',
+            mime: 'text/plain',
+            text: data.content,
+            isImage: false
+          });
+          renderAttachments();
+          updateSendButtonState();
+        }
+      } catch (err) {
+        alert('Failed to load file content: ' + err.message);
+      }
+    };
+
+    // --- Integrated Terminal Modal Handlers ---
+    function openTerminalModal() {
+      terminalModal.classList.remove('hidden');
+      terminalCommandInput.focus();
+    }
+
+    function closeTerminalModal() {
+      terminalModal.classList.add('hidden');
+    }
+
+    if (terminalToggleBtn) terminalToggleBtn.addEventListener('click', openTerminalModal);
+    if (closeTerminalModalBtn) closeTerminalModalBtn.addEventListener('click', closeTerminalModal);
+    if (terminalModal) {
+      terminalModal.addEventListener('click', (e) => {
+        if (e.target === terminalModal) closeTerminalModal();
+      });
+    }
+    if (clearTerminalOutputBtn) {
+      clearTerminalOutputBtn.addEventListener('click', () => {
+        terminalConsoleOutput.innerHTML = '<div class="text-zinc-500 italic">terminal console cleared.</div>';
+      });
+    }
+
+    window.setTerminalTarget = function(target) {
+      terminalTarget = target;
+      if (target === 'local') {
+        targetLocalBtn.className = 'px-2.5 py-1 rounded-md text-[11px] bg-emerald-500/20 text-emerald-300 font-medium transition';
+        targetVpsBtn.className = 'px-2.5 py-1 rounded-md text-[11px] text-zinc-400 hover:text-white transition';
+        terminalPromptPrefix.innerText = (currentSettings.workspace_root || 'workspace') + '>';
+      } else {
+        targetVpsBtn.className = 'px-2.5 py-1 rounded-md text-[11px] bg-cyan-500/20 text-cyan-300 font-medium transition';
+        targetLocalBtn.className = 'px-2.5 py-1 rounded-md text-[11px] text-zinc-400 hover:text-white transition';
+        terminalPromptPrefix.innerText = (currentSettings.vps_ssh_target || 'vps') + ':' + (currentSettings.vps_remote_dir || '~') + '$';
+      }
+      terminalCommandInput.focus();
+    };
+
+    window.runQuickCommand = function(cmd) {
+      terminalCommandInput.value = cmd;
+      executeManualCommand();
+    };
+
+    function appendTerminalLine(cmd, output, isError) {
+      const promptText = terminalTarget === 'local' ? ((currentSettings.workspace_root || 'workspace') + '>') : ((currentSettings.vps_ssh_target || 'vps') + ':' + (currentSettings.vps_remote_dir || '~') + '$');
+      const div = document.createElement('div');
+      div.className = 'space-y-1';
+      div.innerHTML = `
+        <div class="flex items-center gap-2 text-zinc-400 font-bold">
+          <span class="text-emerald-400 select-none">${promptText}</span>
+          <span class="text-white">${escapeHtml(cmd)}</span>
+          <span class="text-[10px] ${isError ? 'text-amber-400' : 'text-emerald-400'} ml-auto lowercase">${isError ? 'prohibited' : 'completed'}</span>
+        </div>
+        <div class="text-[11px] ${isError ? 'text-amber-300 bg-amber-500/10 border-amber-500/20' : 'text-zinc-300 bg-[#0c0e14] border-border/40'} p-2.5 rounded-lg border whitespace-pre-wrap select-text font-mono leading-relaxed">
+          ${escapeHtml(output)}
+        </div>
+      `;
+      terminalConsoleOutput.appendChild(div);
+      terminalConsoleOutput.scrollTop = terminalConsoleOutput.scrollHeight;
+    }
+
+    async function executeManualCommand() {
+      const rawCmd = terminalCommandInput.value.trim();
+      if (!rawCmd) return;
+      terminalHistory.push(rawCmd);
+      terminalHistoryIdx = terminalHistory.length;
+      terminalCommandInput.value = '';
+
+      // Strict prohibition on git commands
+      if (/(^|[\s;&|])git(\.exe)?([\s;&|]|$)/i.test(rawCmd)) {
+        appendTerminalLine(rawCmd, 'error: git commands are strictly prohibited in this environment.', true);
+        return;
+      }
+
+      const promptText = terminalTarget === 'local' ? ((currentSettings.workspace_root || 'workspace') + '>') : ((currentSettings.vps_ssh_target || 'vps') + ':' + (currentSettings.vps_remote_dir || '~') + '$');
+      const cmdEntry = document.createElement('div');
+      cmdEntry.className = 'space-y-1';
+      cmdEntry.innerHTML = `
+        <div class="flex items-center gap-2 text-zinc-400 font-bold">
+          <span class="text-emerald-400 select-none">${promptText}</span>
+          <span class="text-white">${escapeHtml(rawCmd)}</span>
+          <span class="text-[10px] text-cyan-400 animate-pulse ml-auto lowercase">running...</span>
+        </div>
+      `;
+      terminalConsoleOutput.appendChild(cmdEntry);
+      terminalConsoleOutput.scrollTop = terminalConsoleOutput.scrollHeight;
+
+      try {
+        const res = await fetch('/api/terminal/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: rawCmd, target: terminalTarget })
+        });
+        const data = await res.json();
+        const resultText = data.result || '';
+        const isErr = resultText.startsWith('error') || resultText.includes('exit code: 1') || resultText.includes('exit code: 2');
+        const badgeClass = isErr ? 'text-rose-400' : 'text-emerald-400';
+
+        const statusPill = cmdEntry.querySelector('span:last-child');
+        if (statusPill) {
+          statusPill.className = `text-[10px] ${badgeClass} ml-auto lowercase`;
+          statusPill.innerText = isErr ? 'failed' : 'completed';
+        }
+
+        const outElem = document.createElement('div');
+        outElem.className = 'text-zinc-300 font-mono text-[11px] bg-[#0c0e14] p-2.5 rounded-lg border border-border/40 whitespace-pre-wrap select-text leading-relaxed';
+        outElem.innerText = resultText;
+        cmdEntry.appendChild(outElem);
+      } catch (err) {
+        const statusPill = cmdEntry.querySelector('span:last-child');
+        if (statusPill) {
+          statusPill.className = 'text-[10px] text-rose-400 ml-auto lowercase';
+          statusPill.innerText = 'failed';
+        }
+        const outElem = document.createElement('div');
+        outElem.className = 'text-rose-400 font-mono text-[11px] bg-[#0c0e14] p-2.5 rounded-lg border border-rose-500/20 leading-relaxed';
+        outElem.innerText = `error: ${err.message}`;
+        cmdEntry.appendChild(outElem);
+      }
+      terminalConsoleOutput.scrollTop = terminalConsoleOutput.scrollHeight;
+    }
+
+    if (runTerminalCommandBtn) runTerminalCommandBtn.addEventListener('click', executeManualCommand);
+    if (terminalCommandInput) {
+      terminalCommandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          executeManualCommand();
+        } else if (e.key === 'ArrowUp') {
+          if (terminalHistory.length > 0 && terminalHistoryIdx > 0) {
+            terminalHistoryIdx--;
+            terminalCommandInput.value = terminalHistory[terminalHistoryIdx];
+          }
+        } else if (e.key === 'ArrowDown') {
+          if (terminalHistoryIdx < terminalHistory.length - 1) {
+            terminalHistoryIdx++;
+            terminalCommandInput.value = terminalHistory[terminalHistoryIdx];
+          } else {
+            terminalHistoryIdx = terminalHistory.length;
+            terminalCommandInput.value = '';
+          }
+        }
+      });
+    }
+
+    // Sidebar toggles
+    if (toggleSidebarBtn) {
+      toggleSidebarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.add('-ml-64');
+        if (openSidebarBtn) openSidebarBtn.classList.remove('hidden');
+      });
+    }
+
+    if (openSidebarBtn) {
+      openSidebarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.remove('-ml-64');
+        openSidebarBtn.classList.add('hidden');
+      });
+    }
+
+    // Dropdown toggles
+    if (modelDropdownBtn) {
+      modelDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (modelDropdownMenu) modelDropdownMenu.classList.toggle('hidden');
+        if (thinkingDropdownMenu) thinkingDropdownMenu.classList.add('hidden');
+      });
+    }
+
+    if (modelDropdownMenu) {
+      modelDropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    if (thinkingDropdownBtn) {
+      thinkingDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (thinkingDropdownMenu) thinkingDropdownMenu.classList.toggle('hidden');
+        if (modelDropdownMenu) modelDropdownMenu.classList.add('hidden');
+      });
+    }
+
+    if (thinkingDropdownMenu) {
+      thinkingDropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    document.addEventListener('click', () => {
+      if (modelDropdownMenu) modelDropdownMenu.classList.add('hidden');
+      if (thinkingDropdownMenu) thinkingDropdownMenu.classList.add('hidden');
+    });
+
+    // Model options
+    document.querySelectorAll('.model-option').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const selectedModel = btn.getAttribute('data-model');
+        setModel(selectedModel);
+        if (modelDropdownMenu) modelDropdownMenu.classList.add('hidden');
+      });
+    });
+
+    function setModel(modelId, save = true) {
+      currentModel = modelId;
+      const isArgon = modelId === 'gemini-4-argon';
+      const label = isArgon ? 'Gemini 4 Argon' : 'Gemini 4 Carbon';
+      const dotColor = isArgon ? 'bg-emerald-400' : 'bg-cyan-400';
+
+      if (modelBtnLabel) modelBtnLabel.innerText = label;
+      if (modelBtnDot) modelBtnDot.className = `w-1.5 h-1.5 rounded-full ${dotColor}`;
+      if (topModelName) topModelName.innerText = isArgon ? 'Argon' : 'Carbon';
+      if (topModelDot) topModelDot.className = `w-2 h-2 rounded-full ${dotColor}`;
+
+      if (save && currentConversationId) {
+        saveCurrentConversation();
+      }
+    }
+
+    // Thinking options
+    document.querySelectorAll('.thinking-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const level = btn.getAttribute('data-level');
+        setThinkingLevel(level, true);
+        thinkingDropdownMenu.classList.add('hidden');
+      });
+    });
+
+    function setThinkingLevel(level, save = true) {
+      currentThinkingLevel = level;
+      thinkingBtnLabel.innerText = level.charAt(0).toUpperCase() + level.slice(1);
+      if (save && currentConversationId) {
+        saveCurrentConversation();
+      }
+    }
+
+    // Textarea input handling
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 180) + 'px';
+      updateSendButtonState();
+    });
+
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtn.disabled && !isGenerating) {
+          handleSendMessage();
+        }
+      }
+    });
+
+    function updateSendButtonState() {
+      const hasText = messageInput.value.trim().length > 0;
+      const hasFiles = attachedFiles.length > 0;
+      sendBtn.disabled = (!hasText && !hasFiles) || isGenerating;
+    }
+
+    // Attachments Handling
+    attachBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        await processAttachedFile(file);
+      }
+      fileInput.value = '';
+      renderAttachments();
+      updateSendButtonState();
+    });
+
+    async function processAttachedFile(file) {
+      const isImage = (file.type && file.type.startsWith('image/')) || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name || '');
+      let fileName = file.name || 'attachment';
+      if (isImage && (!file.name || file.name === 'image.png' || file.name === 'blob')) {
+        const ext = file.type ? (file.type.split('/')[1] || 'png') : 'png';
+        const d = new Date();
+        const timeStr = `${d.getHours().toString().padStart(2, '0')}${d.getMinutes().toString().padStart(2, '0')}${d.getSeconds().toString().padStart(2, '0')}`;
+        fileName = `pasted-image-${timeStr}.${ext}`;
+      }
+
+      const item = {
+        name: fileName,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        mime: file.type || (isImage ? 'image/png' : 'text/plain')
+      };
+
+      if (isImage) {
+        const b64 = await readFileAsBase64(file);
+        item.data = b64;
+        item.isImage = true;
+      } else {
+        const text = await readFileAsText(file);
+        item.text = text;
+        item.isImage = false;
+      }
+      attachedFiles.push(item);
+    }
+
+    // Clipboard Paste Handler (Ctrl+V)
+    async function handleClipboardPaste(e) {
+      const clipboardData = e.clipboardData || window.clipboardData;
+      if (!clipboardData) return;
+
+      const files = [];
+
+      // Check clipboard items for image files
+      if (clipboardData.items && clipboardData.items.length > 0) {
+        for (let i = 0; i < clipboardData.items.length; i++) {
+          const item = clipboardData.items[i];
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const f = item.getAsFile();
+            if (f) files.push(f);
+          }
+        }
+      }
+
+      // Fallback to clipboard files
+      if (files.length === 0 && clipboardData.files && clipboardData.files.length > 0) {
+        for (let i = 0; i < clipboardData.files.length; i++) {
+          const f = clipboardData.files[i];
+          if (f.type && f.type.startsWith('image/')) {
+            files.push(f);
+          }
+        }
+      }
+
+      if (files.length > 0) {
+        e.preventDefault();
+        for (const file of files) {
+          await processAttachedFile(file);
+        }
+        renderAttachments();
+        updateSendButtonState();
+        messageInput.focus();
+      }
+    }
+
+    // Attach paste handler to textarea
+    messageInput.addEventListener('paste', handleClipboardPaste);
+
+    // Global paste handler when user presses Ctrl+V anywhere in chat window
+    window.addEventListener('paste', async (e) => {
+      if (e.target === messageInput) return;
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        return; // Don't intercept if user is typing in terminal or search inputs
+      }
+      const clipboardData = e.clipboardData || window.clipboardData;
+      if (!clipboardData) return;
+      const hasImage = Array.from(clipboardData.items || []).some(item => item.kind === 'file' && item.type.startsWith('image/')) ||
+                       Array.from(clipboardData.files || []).some(f => f.type && f.type.startsWith('image/'));
+      if (hasImage) {
+        await handleClipboardPaste(e);
+      }
+    });
+
+    // Drag and drop images/files onto the chatbox
+    const chatInputCard = messageInput.closest('.rounded-2xl');
+    if (chatInputCard) {
+      ['dragenter', 'dragover'].forEach(name => {
+        chatInputCard.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          chatInputCard.classList.add('border-emerald-500/60');
+        }, false);
+      });
+      ['dragleave', 'drop'].forEach(name => {
+        chatInputCard.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          chatInputCard.classList.remove('border-emerald-500/60');
+        }, false);
+      });
+      chatInputCard.addEventListener('drop', async (e) => {
+        const dt = e.dataTransfer;
+        if (!dt || !dt.files || dt.files.length === 0) return;
+        for (const file of Array.from(dt.files)) {
+          await processAttachedFile(file);
+        }
+        renderAttachments();
+        updateSendButtonState();
+        messageInput.focus();
+      }, false);
+    }
+
+    function readFileAsBase64(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function readFileAsText(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(file);
+      });
+    }
+
+    function renderAttachments() {
+      if (attachedFiles.length === 0) {
+        attachmentsPreview.classList.add('hidden');
+        attachmentsPreview.innerHTML = '';
+        return;
+      }
+
+      attachmentsPreview.classList.remove('hidden');
+      attachmentsPreview.innerHTML = attachedFiles.map((file, idx) => {
+        if (file.isImage && file.data) {
+          return `
+            <div class="relative group flex items-center gap-2 p-1 pr-2 rounded-xl bg-[#1b1e2a] border border-border text-xs text-zinc-200 shadow-sm">
+              <img src="data:${file.mime};base64,${file.data}" class="w-9 h-9 object-cover rounded-lg bg-black/40 border border-white/5" alt="${escapeHtml(file.name)}" />
+              <div class="flex flex-col min-w-0 pr-1">
+                <span class="font-mono text-[11px] truncate max-w-[130px] font-medium text-white">${escapeHtml(file.name)}</span>
+                <span class="text-[10px] text-zinc-400 font-mono">${file.size}</span>
+              </div>
+              <button type="button" onclick="removeAttachment(${idx})" class="p-1 rounded-md text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition" title="Remove image">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#20232e] border border-border text-xs text-zinc-200">
+            <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+            <span class="font-mono text-[11px] truncate max-w-[150px]">${escapeHtml(file.name)}</span>
+            <span class="text-[10px] text-zinc-500">(${file.size})</span>
+            <button type="button" onclick="removeAttachment(${idx})" class="p-0.5 rounded text-zinc-400 hover:text-white transition">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.removeAttachment = function(idx) {
+      attachedFiles.splice(idx, 1);
+      renderAttachments();
+      updateSendButtonState();
+    };
+
+    // Quick prompts
+    document.querySelectorAll('.quick-prompt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const title = btn.querySelector('.font-medium').innerText;
+        messageInput.value = title;
+        messageInput.style.height = 'auto';
+        messageInput.style.height = messageInput.scrollHeight + 'px';
+        updateSendButtonState();
+        messageInput.focus();
+      });
+    });
+
+    // Rename chat
+    activeChatTitle.addEventListener('click', () => {
+      const current = activeChatTitle.innerText;
+      const updated = prompt('Rename chat:', current);
+      if (updated && updated.trim()) {
+        activeChatTitle.innerText = updated.trim();
+        saveCurrentConversation();
+      }
+    });
+
+    // Clear chat
+    clearChatBtn.addEventListener('click', async () => {
+      if (confirm('Clear messages in this chat?')) {
+        activeMessages = [];
+        renderAllMessages();
+        try {
+          if (currentConversationId) {
+            await fetch('/api/conversations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: currentConversationId, messages: [], clear_all: true })
+            });
+            await loadConversationsList();
+          }
+        } catch (e) {}
+      }
+    });
+
+    // New Chat
+    newChatBtn.addEventListener('click', startNewChat);
+
+    function startNewChat() {
+      if (isGenerating && activeAbortController) {
+        activeAbortController.abort();
+      }
+      currentConversationId = null;
+      activeMessages = [];
+      attachedFiles = [];
+      renderAttachments();
+      messageInput.value = '';
+      messageInput.style.height = '28px';
+      activeChatTitle.innerText = 'New chat';
+      renderAllMessages();
+      updateSendButtonState();
+      highlightActiveConversationInSidebar();
+    }
+
+    // Conversations API
+    async function loadConversationsList() {
+      try {
+        const res = await fetch('/api/conversations');
+        conversations = await res.json();
+        renderConversationsList();
+      } catch (err) {
+        console.error('Failed to load conversations', err);
+      }
+    }
+
+    function formatTimeAgo(dateVal) {
+      if (!dateVal) return '';
+      let past = typeof dateVal === 'number' ? (dateVal < 1e11 ? dateVal * 1000 : dateVal) : new Date(dateVal).getTime();
+      if (isNaN(past) || past <= 0) return '';
+      const now = Date.now();
+      const diffSec = Math.floor((now - past) / 1000);
+      if (diffSec < 60) return 'now';
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m`;
+      const diffHours = Math.floor(diffMin / 60);
+      if (diffHours < 24) return `${diffHours}h`;
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays < 30) return `${diffDays}d`;
+      const diffMonths = Math.floor(diffDays / 30);
+      return `${diffMonths}mo`;
+    }
+
+    function renderConversationsList() {
+      const query = chatSearchInput ? chatSearchInput.value.toLowerCase().trim() : '';
+      const filtered = conversations.filter(c => c.title.toLowerCase().includes(query));
+
+      if (filtered.length === 0) {
+        conversationsList.innerHTML = `<div class="px-3 py-6 text-center text-xs text-zinc-500 font-sans">No conversations yet</div>`;
+        return;
+      }
+
+      conversationsList.innerHTML = filtered.map(c => {
+        const isActive = c.id === currentConversationId;
+        const timeAgoStr = formatTimeAgo(c.updatedAt || c.createdAt);
+
+        return `
+          <div
+            onclick="switchConversation('${c.id}')"
+            class="group flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer text-[13px] transition select-none ${isActive ? 'bg-[#181a24] text-white font-medium' : 'text-zinc-300 hover:bg-white/5 hover:text-white'}"
+          >
+            <span class="truncate pr-2">${escapeHtml(c.title)}</span>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[11px] text-zinc-500 font-sans ${isActive ? 'text-zinc-400' : ''}">${timeAgoStr}</span>
+              ${isActive ? `<span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 ml-0.5"></span>` : ''}
+              <button
+                type="button"
+                onclick="event.stopPropagation(); deleteConversation('${c.id}')"
+                class="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-500 hover:text-rose-400 transition"
+                title="Delete chat"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    chatSearchInput.addEventListener('input', renderConversationsList);
+
+    window.switchConversation = async function(cid) {
+      if (isGenerating && activeAbortController) {
+        activeAbortController.abort();
+      }
+      try {
+        const res = await fetch(`/api/conversations/${cid}`);
+        if (!res.ok) return;
+        const convo = await res.json();
+        currentConversationId = convo.id;
+        activeChatTitle.innerText = convo.title || 'Untitled Chat';
+
+        activeMessages = convo.messages || [];
+        setModel(convo.model || 'gemini-4-argon', false);
+        setThinkingLevel(convo.thinking_level || 'high', false);
+
+        lastKnownMessageCount = activeMessages.length;
+        visibleStartIndex = Math.max(0, activeMessages.length - PAGE_SIZE);
+
+        renderAllMessages(true);
+        highlightActiveConversationInSidebar();
+
+        // If the conversation was actively generating when page reloaded or opened, resume it!
+        const lastMsg = activeMessages[activeMessages.length - 1];
+        if (lastMsg && lastMsg.role === 'model' && lastMsg.is_generating) {
+          attachLiveStream(cid, activeMessages.length - 1, false);
+        }
+      } catch (err) {
+        console.error('Error switching conversation', err);
+      }
+    };
+
+    window.deleteConversation = async function(cid) {
+      if (!confirm('Delete this conversation?')) return;
+      try {
+        await fetch(`/api/conversations/${cid}`, { method: 'DELETE' });
+        if (currentConversationId === cid) {
+          startNewChat();
+        }
+        await loadConversationsList();
+      } catch (err) {
+        console.error('Error deleting conversation', err);
+      }
+    };
+
+    function highlightActiveConversationInSidebar() {
+      renderConversationsList();
+    }
+
+    loadEarlierBtn.addEventListener('click', () => {
+      const prevScrollHeight = messagesContainer.scrollHeight;
+      visibleStartIndex = Math.max(0, visibleStartIndex - PAGE_SIZE);
+      renderAllMessages(false);
+      requestAnimationFrame(() => {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight - prevScrollHeight;
+      });
+    });
+
+    async function saveCurrentConversation(force = false) {
+      if (activeMessages.length === 0 && !force) return;
+      if (!currentConversationId && activeMessages.length === 0) return;
+
+      let title = activeChatTitle.innerText;
+      if ((!title || title === 'New chat') && activeMessages.length > 0) {
+        const firstUserMsg = activeMessages.find(m => m.role === 'user');
+        if (firstUserMsg && firstUserMsg.text) {
+          title = firstUserMsg.text.slice(0, 36).replace(/\n/g, ' ').trim();
+          activeChatTitle.innerText = title;
+        }
+      }
+
+      const payload = {
+        id: currentConversationId,
+        title: title,
+        model: currentModel,
+        thinking_level: currentThinkingLevel,
+        messages: activeMessages
+      };
+
+      try {
+        const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const saved = await res.json();
+        currentConversationId = saved.id;
+        loadConversationsList();
+      } catch (err) {
+        console.error('Error saving conversation', err);
+      }
+    }
+
+    // Render Messages
+    function renderAllMessages(autoScroll = false) {
+      if (activeMessages.length === 0) {
+        emptyState.classList.remove('hidden');
+        loadEarlierContainer.classList.add('hidden');
+        messagesList.innerHTML = '';
+        messagesList.appendChild(emptyState);
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      if (visibleStartIndex > 0) {
+        loadEarlierContainer.classList.remove('hidden');
+        loadEarlierBtn.innerText = `Load earlier messages (${visibleStartIndex} remaining)`;
+      } else {
+        loadEarlierContainer.classList.add('hidden');
+      }
+
+      const visibleSlice = activeMessages.slice(visibleStartIndex);
+      const renderedHtml = visibleSlice.map((msg, idx) => {
+        const actualIndex = visibleStartIndex + idx;
+        return renderSingleMessageHtml(msg, actualIndex);
+      }).join('');
+
+      messagesList.innerHTML = '';
+      if (visibleStartIndex > 0) {
+        messagesList.appendChild(loadEarlierContainer);
+      }
+      messagesList.insertAdjacentHTML('beforeend', renderedHtml);
+
+      attachCodeBlockButtons(messagesList);
+
+      if (autoScroll) {
+        setTimeout(() => {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 60);
+      }
+    }
+
+    window.toggleTerminalCollapse = function(toolId) {
+      const body = document.getElementById('body-' + toolId);
+      const arrow = document.getElementById('arrow-' + toolId);
+      if (!body) return;
+      body.classList.toggle('hidden');
+      if (arrow) {
+        arrow.style.transform = body.classList.contains('hidden') ? 'rotate(-90deg)' : '';
+      }
+    };
+
+    function renderToolCallCard(tc, isLive = false) {
+      if (tc.name === 'run_command') {
+        const cmd = (tc.args && tc.args.command) ? tc.args.command : (typeof tc.args === 'string' ? tc.args : '');
+        const target = (tc.args && tc.args.target) ? tc.args.target : 'local';
+        const output = tc.output || tc.result_preview || '';
+        const isProhibited = output.includes('strictly prohibited');
+        const isError = !isProhibited && (output.startsWith('error') || output.includes('exit code: 1') || output.includes('exit code: 2'));
+        const badgeColor = isProhibited ? 'text-amber-400 border-amber-500/20 bg-amber-500/10' :
+                           isError ? 'text-rose-400 border-rose-500/20 bg-rose-500/10' :
+                           isLive ? 'text-cyan-400 border-cyan-500/20 bg-cyan-500/10' :
+                           'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
+        const badgeText = isProhibited ? 'prohibited' : isError ? 'failed' : (isLive ? 'running...' : 'success');
+        const toolId = 'term-' + Math.random().toString(36).substring(2, 9);
+        const hasOutput = Boolean(output && output !== 'Success');
+
+        return `
+          <div class="rounded-xl bg-[#0e1017] border border-border/80 overflow-hidden text-xs font-mono mb-1.5 shadow-sm">
+            <div class="p-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-[#141622] transition" onclick="toggleTerminalCollapse('${toolId}')">
+              <div class="flex items-center gap-2 truncate">
+                <span class="text-emerald-400 font-bold">&gt;_</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-[#181a26] border border-border text-zinc-400 uppercase">${escapeHtml(target)}</span>
+                <span class="text-zinc-200 truncate font-semibold">$ ${escapeHtml(cmd || 'run_command')}</span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] ${badgeColor} px-2 py-0.5 rounded border lowercase">${badgeText}</span>
+                <svg id="arrow-${toolId}" class="w-3.5 h-3.5 text-zinc-500 transition-transform ${hasOutput ? '' : 'hidden'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            ${hasOutput ? `
+              <div id="body-${toolId}" class="p-3 bg-[#08090d] border-t border-border/60 text-zinc-300 font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto select-text">
+                ${escapeHtml(output)}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="p-2 rounded-xl bg-[#12141c] border border-border text-xs font-mono text-zinc-300 flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2 truncate">
+            <span class="text-emerald-400 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-400 shrink-0 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>${escapeHtml(tc.name)}</span></span>
+            <span class="text-zinc-500 truncate max-w-sm">${escapeHtml(tc.result_preview || JSON.stringify(tc.args || ''))}</span>
+          </div>
+          <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 lowercase">success</span>
+        </div>
+      `;
+    }
+
+        window.toggleToolDrawer = function(index) {
+      const drawer = document.getElementById(`toolDrawer-${index}`);
+      if (drawer) drawer.classList.toggle('hidden');
+    };
+
+    window.copyMessageText = function(index) {
+      const msg = activeMessages[index];
+      if (!msg || !msg.text) return;
+      navigator.clipboard.writeText(msg.text).then(() => {
+        const btn = document.getElementById(`copyBtn-${index}`);
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<span class="text-emerald-400 text-[10px]">Copied!</span>`;
+          setTimeout(() => btn.innerHTML = orig, 1800);
+        }
+      });
+    };
+
+    window.toggleThoughtDrawer = function(index) {
+      const drawer = document.getElementById(`thoughtContent-${index}`);
+      const chevron = document.getElementById(`thoughtChevron-${index}`);
+      if (drawer) {
+        drawer.classList.toggle('hidden');
+        if (chevron) chevron.classList.toggle('rotate-90');
+      }
+    };
+
+    function renderSingleMessageHtml(msg, index) {
+      try {
+        if (msg.role === 'user') {
+          const filesHtml = (msg.files && msg.files.length > 0) ? `
+            <div class="flex flex-wrap gap-2 mb-2.5">
+              ${msg.files.map(f => {
+                if (f.data) {
+                  return `
+                    <div class="rounded-xl overflow-hidden border border-border/80 bg-black/40 max-w-xs shadow-sm">
+                      <img src="data:${f.mime || 'image/png'};base64,${f.data}" class="max-h-56 w-auto object-contain cursor-pointer hover:opacity-95 transition" onclick="window.open(this.src)" title="Click to view full image" alt="${escapeHtml(f.name || 'Image')}" />
+                      <div class="px-2 py-1 bg-[#151722] text-[10px] font-mono text-zinc-400 truncate flex items-center justify-between border-t border-border/40">
+                        <span class="truncate">${escapeHtml(f.name || 'image')}</span>
+                        <span class="text-zinc-500 ml-1 shrink-0">${f.size || ''}</span>
+                      </div>
+                    </div>
+                  `;
+                }
+                return `
+                  <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-[#181a24] text-[11px] font-mono text-zinc-300 border border-zinc-700/60">
+                    <svg class="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                    <span>${escapeHtml(f.name)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : '';
+
+          return `
+            <div class="flex justify-end mb-6">
+              <div class="max-w-[76%] bg-[#1a1b24] border border-[#262836] rounded-2xl px-4 py-3 text-sm text-[#e8ecf2] shadow-sm select-text">
+                ${filesHtml}
+                <div class="whitespace-pre-wrap leading-relaxed font-sans">${escapeHtml(msg.text)}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          const isArgon = (msg.model || currentModel) === 'gemini-4-argon';
+
+          if (msg.is_generating) {
+            const elapsed = msg.started_at ? Math.max(0, ((Date.now() / 1000) - msg.started_at)).toFixed(1) : '0.0';
+            const hasThoughts = Boolean(msg.thoughts);
+            const thinkingHtml = `
+              <div id="liveThinkingContainer" class="mb-3.5 select-none">
+                <div class="inline-flex items-center gap-1.5 text-xs text-zinc-400">
+                  <span class="w-1.5 h-1.5 rounded-full ${isArgon ? 'bg-emerald-400' : 'bg-cyan-400'} thinking-dot"></span>
+                  <span id="liveThinkingTimer">Thinking... (${elapsed}s) &gt;</span>
+                </div>
+                <div id="liveThoughtStream" class="${hasThoughts ? '' : 'hidden'} mt-2.5 p-3.5 rounded-xl bg-[#111218] border border-[#1f2230] text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">${escapeHtml(msg.thoughts || '')}</div>
+              </div>
+            `;
+
+            const hasTools = msg.toolCalls && msg.toolCalls.length > 0;
+            const toolsHtml = `
+              <div id="liveToolContainer" class="mb-3 space-y-1.5 ${hasTools ? '' : 'hidden'}">
+                ${(msg.toolCalls || []).map(tc => renderToolCallCard(tc, false)).join('')}
+              </div>
+            `;
+
+            return `
+              <div class="mb-8" id="msg-${index}">
+                ${thinkingHtml}
+                ${toolsHtml}
+                <div id="liveContentStream" class="prose-custom">${renderMarkdownSafely(msg.text || '')}</div>
+                <div id="liveUsage" class="hidden mt-3 pt-2 border-t border-[#1a1c26] text-[11px] font-mono text-zinc-500"></div>
+              </div>
+            `;
+          }
+
+          let thinkingHtml = '';
+          if (msg.thoughts) {
+            let durationStr = '12s';
+            if (msg.duration) {
+              const sec = Math.round(msg.duration);
+              durationStr = sec >= 60 ? `${Math.floor(sec / 60)}m` : `${sec}s`;
+            }
+            thinkingHtml = `
+              <div class="mb-3.5 select-none">
+                <button
+                  type="button"
+                  onclick="toggleThoughtDrawer(${index})"
+                  class="group inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition"
+                >
+                  <span>Worked for ${durationStr} &gt;</span>
+                </button>
+                <div id="thoughtContent-${index}" class="hidden mt-2.5 p-3.5 rounded-xl bg-[#111218] border border-[#1f2230] text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto">
+                  ${escapeHtml(msg.thoughts)}
+                </div>
+              </div>
+            `;
+          }
+
+          let toolsHtml = '';
+          if (msg.toolCalls && msg.toolCalls.length > 0) {
+            let summaryText = `${msg.toolCalls.length} tool${msg.toolCalls.length > 1 ? 's' : ''} executed`;
+            const fileModCount = msg.toolCalls.filter(t => t.name === 'write_file' || t.name === 'edit_file').length;
+            if (fileModCount > 0) {
+              summaryText = `${fileModCount} file${fileModCount > 1 ? 's' : ''} changed`;
+            } else if (msg.toolCalls.some(t => t.name === 'run_command')) {
+              summaryText = `Terminal execution`;
+            }
+
+            toolsHtml = `
+              <div class="mt-4 pt-3 flex items-center justify-between border-t border-[#181a24]">
+                <button type="button" onclick="toggleToolDrawer(${index})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#13151f] hover:bg-[#1a1d2b] border border-[#222534] text-xs text-zinc-300 font-mono transition">
+                  <span>${escapeHtml(summaryText)} &gt;</span>
+                </button>
+                <button type="button" onclick="toggleToolDrawer(${index})" class="px-2.5 py-1 rounded-lg text-xs bg-[#181a24] hover:bg-[#202330] border border-[#292c3c] text-zinc-300 hover:text-white transition font-sans flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>Review</span>
+                </button>
+              </div>
+              <div id="toolDrawer-${index}" class="hidden mt-2.5 space-y-1.5">
+                ${msg.toolCalls.map(tc => renderToolCallCard(tc, false)).join('')}
+              </div>
+            `;
+          }
+
+          const renderedContent = renderMarkdownSafely(msg.text);
+          const timeAgoStr = formatTimeAgo(msg.timestamp || (msg.started_at ? msg.started_at * 1000 : null));
+
+          return `
+            <div class="mb-8" id="msg-${index}">
+              ${thinkingHtml}
+              <div class="prose-custom">${renderedContent}</div>
+              ${toolsHtml}
+              <div class="mt-3 flex items-center justify-end gap-3 text-xs text-zinc-500 select-none">
+                <span class="text-[11px] font-mono text-zinc-500">${timeAgoStr}</span>
+                <button type="button" onclick="copyMessageText(${index})" id="copyBtn-${index}" title="Copy response" class="p-1 rounded hover:text-zinc-200 hover:bg-white/5 transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+                <button type="button" title="Helpful" class="p-1 rounded hover:text-emerald-400 hover:bg-white/5 transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                </button>
+                <button type="button" title="Not helpful" class="p-1 rounded hover:text-rose-400 hover:bg-white/5 transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        console.error('Error rendering message at index', index, err);
+        return `
+          <div class="p-3 my-2 rounded-xl bg-[#151722] border border-[#232635] text-xs text-zinc-400">
+            [Message could not be rendered: ${escapeHtml(err.message)}]
+          </div>
+        `;
+      }
+    }
+
+// Send Message & Live Streaming with Agentic Tool Calling
+    async function handleSendMessage() {
+      const text = messageInput.value.trim();
+      if (!text && attachedFiles.length === 0) return;
+      if (isGenerating) return;
+
+      if (!currentConversationId) {
+        currentConversationId = 'c-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+      }
+
+      const userFiles = [...attachedFiles];
+      attachedFiles = [];
+      renderAttachments();
+
+      messageInput.value = '';
+      messageInput.style.height = '28px';
+      updateSendButtonState();
+
+      if (activeMessages.length === 0) {
+        activeChatTitle.innerText = text.slice(0, 36).replace(/\n/g, ' ').trim() || 'New Chat';
+      }
+
+      activeMessages.push({
+        role: 'user',
+        text: text,
+        files: userFiles
+      });
+
+      const assistantMsgIndex = activeMessages.length;
+      const startedAt = Date.now() / 1000;
+      activeMessages.push({
+        role: 'model',
+        model: currentModel,
+        text: '',
+        thoughts: '',
+        toolCalls: [],
+        is_generating: true,
+        started_at: startedAt,
+        duration: null
+      });
+
+      renderAllMessages(true);
+      await saveCurrentConversation(true);
+
+      attachLiveStream(currentConversationId, assistantMsgIndex, true);
+    }
+
+    async function attachLiveStream(cid, assistantMsgIndex, isNewPost = false) {
+      if (isGenerating && activeAbortController) {
+        activeAbortController.abort();
+      }
+
+      isGenerating = true;
+      sendBtn.classList.add('hidden');
+      stopBtn.classList.remove('hidden');
+
+      activeAbortController = new AbortController();
+
+      stopBtn.onclick = async () => {
+        if (activeAbortController) {
+          activeAbortController.abort();
+        }
+        try {
+          await fetch('/api/chat/abort', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversation_id: cid })
+          });
+        } catch (e) {}
+      };
+
+      const assistantMsg = activeMessages[assistantMsgIndex] || {
+        role: 'model',
+        model: currentModel,
+        text: '',
+        thoughts: '',
+        toolCalls: [],
+        started_at: Date.now() / 1000
+      };
+
+      const startTime = assistantMsg.started_at ? (assistantMsg.started_at * 1000) : Date.now();
+      const timerInterval = setInterval(() => {
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        const timerElem = document.getElementById('liveThinkingTimer');
+        if (timerElem) {
+          timerElem.innerText = `Thinking... (${Math.max(0, elapsed)}s)`;
+        }
+      }, 100);
+
+      const liveThoughtStream = document.getElementById('liveThoughtStream');
+      const liveContentStream = document.getElementById('liveContentStream');
+      const liveThinkingContainer = document.getElementById('liveThinkingContainer');
+      const liveToolContainer = document.getElementById('liveToolContainer');
+      const liveUsage = document.getElementById('liveUsage');
+
+      let streamThoughts = assistantMsg.thoughts || '';
+      let streamContent = assistantMsg.text || '';
+      let thoughtsFinished = Boolean(streamContent);
+      const recordedToolCalls = assistantMsg.toolCalls ? [...assistantMsg.toolCalls] : [];
+
+      try {
+        let response;
+        if (isNewPost) {
+          const contextSlice = activeMessages.slice(0, -1).slice(-60);
+          const contentsPayload = contextSlice.map(m => {
+            const item = { role: m.role, text: m.text };
+            if (m.files && m.files.length > 0) item.files = m.files;
+            return item;
+          });
+
+          response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              conversation_id: cid,
+              model: currentModel,
+              thinking_level: currentThinkingLevel,
+              enable_tools: toolsEnabled,
+              contents: contentsPayload
+            }),
+            signal: activeAbortController.signal
+          });
+        } else {
+          // Reconnect to active streaming job on the server
+          response = await fetch(`/api/chat/stream?cid=${encodeURIComponent(cid)}`, {
+            signal: activeAbortController.signal
+          });
+        }
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const rawData = line.slice(6).trim();
+              if (!rawData) continue;
+              try {
+                const data = JSON.parse(rawData);
+
+                if (data.type === 'thought') {
+                  streamThoughts += data.text;
+                  const curThoughtElem = document.getElementById('liveThoughtStream');
+                  if (curThoughtElem) {
+                    curThoughtElem.classList.remove('hidden');
+                    curThoughtElem.innerText = streamThoughts;
+                    curThoughtElem.scrollTop = curThoughtElem.scrollHeight;
+                  }
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } else if (data.type === 'tool_call') {
+                  const curToolElem = document.getElementById('liveToolContainer');
+                  if (curToolElem) {
+                    curToolElem.classList.remove('hidden');
+                    const tcElem = document.createElement('div');
+                    if (data.name === 'run_command') {
+                      const cmd = (data.args && data.args.command) ? data.args.command : (typeof data.args === 'string' ? data.args : '');
+                      const target = (data.args && data.args.target) ? data.args.target : 'local';
+                      tcElem.className = 'rounded-xl bg-[#0e1017] border border-emerald-500/30 overflow-hidden text-xs font-mono mb-1.5 shadow-sm';
+                      tcElem.innerHTML = `
+                        <div class="p-2.5 flex items-center justify-between gap-2">
+                          <div class="flex items-center gap-2 truncate">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span class="text-emerald-400 font-bold">&gt;_</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] bg-[#181a26] border border-border text-zinc-400 uppercase">${escapeHtml(target)}</span>
+                            <span class="text-zinc-200 truncate font-semibold">$ ${escapeHtml(cmd || 'run_command')}</span>
+                          </div>
+                          <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 lowercase">running...</span>
+                        </div>
+                      `;
+                    } else {
+                      tcElem.className = 'p-2.5 rounded-xl bg-[#141620] border border-emerald-500/30 text-xs font-mono text-zinc-200 flex items-center justify-between mb-1.5';
+                      tcElem.innerHTML = `
+                        <div class="flex items-center gap-2 truncate">
+                          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                          <span class="text-emerald-400 font-bold">${escapeHtml(data.name)}</span>
+                          <span class="text-zinc-400 truncate max-w-sm">${escapeHtml(JSON.stringify(data.args))}</span>
+                        </div>
+                        <span class="text-[10px] text-zinc-400 lowercase">executing...</span>
+                      `;
+                    }
+                    curToolElem.appendChild(tcElem);
+                  }
+                  recordedToolCalls.push({ name: data.name, args: data.args });
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } else if (data.type === 'tool_result') {
+                  const curToolElem = document.getElementById('liveToolContainer');
+                  if (curToolElem && curToolElem.lastElementChild) {
+                    const lastChild = curToolElem.lastElementChild;
+                    if (data.name === 'run_command') {
+                      const curArgs = (recordedToolCalls.length > 0 && recordedToolCalls[recordedToolCalls.length - 1].args) ? recordedToolCalls[recordedToolCalls.length - 1].args : {};
+                      const cmd = curArgs.command || '';
+                      const target = curArgs.target || 'local';
+                      const output = data.output || data.result_preview || '';
+                      const isProhibited = output.includes('strictly prohibited');
+                      const isError = !isProhibited && (output.startsWith('error') || output.includes('exit code: 1') || output.includes('exit code: 2'));
+                      const badgeColor = isProhibited ? 'text-amber-400 border-amber-500/20 bg-amber-500/10' :
+                                         isError ? 'text-rose-400 border-rose-500/20 bg-rose-500/10' :
+                                         'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
+                      const badgeText = isProhibited ? 'prohibited' : isError ? 'failed' : 'success';
+                      const toolId = 'term-' + Math.random().toString(36).substring(2, 9);
+                      const hasOutput = Boolean(output && output !== 'Success');
+
+                      lastChild.className = 'rounded-xl bg-[#0e1017] border border-border/80 overflow-hidden text-xs font-mono mb-1.5 shadow-sm';
+                      lastChild.innerHTML = `
+                        <div class="p-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-[#141622] transition" onclick="toggleTerminalCollapse('${toolId}')">
+                          <div class="flex items-center gap-2 truncate">
+                            <span class="text-emerald-400 font-bold">&gt;_</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] bg-[#181a26] border border-border text-zinc-400 uppercase">${escapeHtml(target)}</span>
+                            <span class="text-zinc-200 truncate font-semibold">$ ${escapeHtml(cmd || 'run_command')}</span>
+                          </div>
+                          <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-[10px] ${badgeColor} px-2 py-0.5 rounded border lowercase">${badgeText}</span>
+                            <svg id="arrow-${toolId}" class="w-3.5 h-3.5 text-zinc-500 transition-transform ${hasOutput ? '' : 'hidden'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        ${hasOutput ? `
+                          <div id="body-${toolId}" class="p-3 bg-[#08090d] border-t border-border/60 text-zinc-300 font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto select-text">
+                            ${escapeHtml(output)}
+                          </div>
+                        ` : ''}
+                      `;
+                      if (recordedToolCalls.length > 0) {
+                        recordedToolCalls[recordedToolCalls.length - 1].output = output;
+                      }
+                    } else {
+                      lastChild.className = 'p-2 rounded-xl bg-[#12141c] border border-border text-xs font-mono text-zinc-300 flex items-center justify-between mb-1.5';
+                      lastChild.innerHTML = `
+                        <div class="flex items-center gap-2 truncate">
+                          <span class="text-emerald-400 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-400 shrink-0 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>${escapeHtml(data.name)}</span></span>
+                          <span class="text-zinc-500 truncate max-w-sm">${escapeHtml(data.result_preview || '')}</span>
+                        </div>
+                        <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 lowercase">success</span>
+                      `;
+                    }
+                  }
+                  if (recordedToolCalls.length > 0) {
+                    recordedToolCalls[recordedToolCalls.length - 1].result_preview = data.result_preview;
+                  }
+                } else if (data.type === 'content') {
+                  const curThinkingContainer = document.getElementById('liveThinkingContainer');
+                  if (!thoughtsFinished && streamThoughts) {
+                    thoughtsFinished = true;
+                    clearInterval(timerInterval);
+                    const finalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                    if (curThinkingContainer) {
+                      curThinkingContainer.innerHTML = `
+                        <button
+                          type="button"
+                          onclick="toggleLiveThought()"
+                          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#171922] hover:bg-[#1e202b] border border-border text-xs text-zinc-400 hover:text-zinc-200 transition"
+                        >
+                          <svg id="liveChevron" class="w-3.5 h-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span>Thought for ${finalElapsed}s</span>
+                        </button>
+                        <div id="liveThoughtDrawer" class="hidden mt-2 p-3 rounded-xl bg-[#111218] border border-border text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+                          ${escapeHtml(streamThoughts)}
+                        </div>
+                      `;
+                    }
+                  } else if (!thoughtsFinished && !streamThoughts) {
+                    thoughtsFinished = true;
+                    clearInterval(timerInterval);
+                    if (curThinkingContainer) curThinkingContainer.remove();
+                  }
+
+                  streamContent += data.text;
+                  const curContentElem = document.getElementById('liveContentStream');
+                  if (curContentElem) {
+                    curContentElem.innerHTML = renderMarkdownSafely(streamContent);
+                    attachCodeBlockButtons(curContentElem);
+                  }
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } else if (data.type === 'done') {
+                  const curUsage = document.getElementById('liveUsage');
+                  if (data.cost_eur !== undefined && curUsage) {
+                    curUsage.classList.remove('hidden');
+                    curUsage.innerHTML = `
+                      <span>${data.input_tokens + data.output_tokens} tokens</span>
+                      <span class="ml-3">€${data.cost_eur.toFixed(4)}</span>
+                    `;
+                  }
+                  if (activeMessages[assistantMsgIndex]) {
+                    activeMessages[assistantMsgIndex].usage = data;
+                  }
+                } else if (data.type === 'error') {
+                  const curContentElem = document.getElementById('liveContentStream');
+                  if (curContentElem) {
+                    curContentElem.innerHTML += `<div class="p-3 my-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">${escapeHtml(data.message)}</div>`;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          const curContentElem = document.getElementById('liveContentStream');
+          if (curContentElem) {
+            curContentElem.innerHTML += `<div class="p-3 my-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">Generation error: ${escapeHtml(err.message)}</div>`;
+          }
+        }
+      } finally {
+        clearInterval(timerInterval);
+        const finalDuration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        if (activeMessages[assistantMsgIndex]) {
+          activeMessages[assistantMsgIndex].text = streamContent;
+          activeMessages[assistantMsgIndex].thoughts = streamThoughts;
+          activeMessages[assistantMsgIndex].toolCalls = recordedToolCalls;
+          activeMessages[assistantMsgIndex].duration = streamThoughts ? parseFloat(finalDuration) : null;
+          activeMessages[assistantMsgIndex].is_generating = false;
+        }
+
+        isGenerating = false;
+        sendBtn.classList.remove('hidden');
+        stopBtn.classList.add('hidden');
+        updateSendButtonState();
+
+        saveCurrentConversation(true);
+        renderAllMessages(false);
+      }
+    }
+
+    window.toggleLiveThought = function() {
+      const drawer = document.getElementById('liveThoughtDrawer');
+      const chevron = document.getElementById('liveChevron');
+      if (drawer) {
+        drawer.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-90');
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+
+    // --- Settings Modal & API Handlers ---
+    let currentAuthMode = 'vertex';
+    let currentSettings = {};
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
+    const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const creditsBtn = document.getElementById('creditsBtn');
+
+    const authModeVertexBtn = document.getElementById('authModeVertexBtn');
+    const authModeApiKeyBtn = document.getElementById('authModeApiKeyBtn');
+    const vertexFieldsGroup = document.getElementById('vertexFieldsGroup');
+    const apiKeyFieldsGroup = document.getElementById('apiKeyFieldsGroup');
+    const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibilityBtn');
+
+    const settingGcpProject = document.getElementById('settingGcpProject');
+    const settingGcpLocation = document.getElementById('settingGcpLocation');
+    const settingApiKey = document.getElementById('settingApiKey');
+    const settingWorkspaceRoot = document.getElementById('settingWorkspaceRoot');
+    const settingVpsTarget = document.getElementById('settingVpsTarget');
+    const settingVpsDir = document.getElementById('settingVpsDir');
+    const settingCustomInstruction = document.getElementById('settingCustomInstruction');
+    const workspacePathValidationBadge = document.getElementById('workspacePathValidationBadge');
+    const settingsFeedbackMsg = document.getElementById('settingsFeedbackMsg');
+
+    const workspaceIndicatorPill = document.getElementById('workspaceIndicatorPill');
+    const workspaceStatusDot = document.getElementById('workspaceStatusDot');
+    const workspaceIndicatorLabel = document.getElementById('workspaceIndicatorLabel');
+    const emptyStateWorkspaceLabel = document.getElementById('emptyStateWorkspaceLabel');
+
+    window.setAuthModeTab = function(mode) {
+      currentAuthMode = mode;
+      if (mode === 'vertex') {
+        if (authModeVertexBtn) authModeVertexBtn.className = 'py-2 px-3 rounded-lg text-xs font-medium transition text-center bg-white/10 text-white shadow-sm';
+        if (authModeApiKeyBtn) authModeApiKeyBtn.className = 'py-2 px-3 rounded-lg text-xs font-medium transition text-center text-zinc-400 hover:text-white';
+        if (vertexFieldsGroup) vertexFieldsGroup.classList.remove('hidden');
+        if (apiKeyFieldsGroup) apiKeyFieldsGroup.classList.add('hidden');
+      } else {
+        if (authModeApiKeyBtn) authModeApiKeyBtn.className = 'py-2 px-3 rounded-lg text-xs font-medium transition text-center bg-white/10 text-white shadow-sm';
+        if (authModeVertexBtn) authModeVertexBtn.className = 'py-2 px-3 rounded-lg text-xs font-medium transition text-center text-zinc-400 hover:text-white';
+        if (apiKeyFieldsGroup) apiKeyFieldsGroup.classList.remove('hidden');
+        if (vertexFieldsGroup) vertexFieldsGroup.classList.add('hidden');
+      }
+    };
+
+    if (toggleApiKeyVisibilityBtn && settingApiKey) {
+      toggleApiKeyVisibilityBtn.addEventListener('click', () => {
+        settingApiKey.type = settingApiKey.type === 'password' ? 'text' : 'password';
+      });
+    }
+
+    async function loadStudioSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        currentSettings = data.settings || {};
+
+        if (creditsBtn && data.billing_url) {
+          creditsBtn.href = data.billing_url;
+        }
+
+        const wsPath = currentSettings.workspace_root || 'workspace';
+        const wsBase = data.workspace_basename || wsPath;
+        if (workspaceIndicatorLabel) {
+          workspaceIndicatorLabel.innerText = wsBase;
+        }
+        if (workspaceIndicatorPill) {
+          workspaceIndicatorPill.title = `Workspace: ${wsPath} (${data.workspace_exists ? 'Mounted & Accessible' : 'Not Found'})`;
+        }
+        if (workspaceStatusDot) {
+          workspaceStatusDot.className = `w-1.5 h-1.5 rounded-full ${data.workspace_exists ? 'bg-emerald-400' : 'bg-amber-400'}`;
+        }
+        if (emptyStateWorkspaceLabel) {
+          emptyStateWorkspaceLabel.innerText = wsBase;
+        }
+
+        // Update terminal prompt prefix
+        if (terminalPromptPrefix) {
+          if (terminalTarget === 'local') {
+            terminalPromptPrefix.innerText = (currentSettings.workspace_root || 'workspace') + '>';
+          } else {
+            terminalPromptPrefix.innerText = (currentSettings.vps_ssh_target || 'vps') + ':' + (currentSettings.vps_remote_dir || '~') + '$';
+          }
+        }
+      } catch (err) {
+        console.error('Error loading settings', err);
+      }
+    }
+
+    function openSettingsModal() {
+      currentAuthMode = currentSettings.auth_mode || 'vertex';
+      setAuthModeTab(currentAuthMode);
+
+      if (settingGcpProject) settingGcpProject.value = currentSettings.gcp_project || '';
+      if (settingGcpLocation) settingGcpLocation.value = currentSettings.gcp_location || 'global';
+      if (settingApiKey) settingApiKey.value = currentSettings.api_key || '';
+      if (settingWorkspaceRoot) settingWorkspaceRoot.value = currentSettings.workspace_root || '';
+      if (settingVpsTarget) settingVpsTarget.value = currentSettings.vps_ssh_target || '';
+      if (settingVpsDir) settingVpsDir.value = currentSettings.vps_remote_dir || '';
+      if (settingCustomInstruction) settingCustomInstruction.value = currentSettings.custom_instruction || '';
+      if (settingsFeedbackMsg) settingsFeedbackMsg.innerText = '';
+
+      if (settingWorkspaceRoot) {
+        validateWorkspacePathInput(settingWorkspaceRoot.value);
+      }
+
+      if (settingsModal) settingsModal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      if (settingsModal) settingsModal.classList.add('hidden');
+    }
+
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
+    if (closeSettingsModalBtn) closeSettingsModalBtn.addEventListener('click', closeSettingsModal);
+    if (cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+    if (settingsModal) {
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) closeSettingsModal();
+      });
+    }
+
+    let pathDebounceTimer = null;
+    if (settingWorkspaceRoot) {
+      settingWorkspaceRoot.addEventListener('input', () => {
+        clearTimeout(pathDebounceTimer);
+        pathDebounceTimer = setTimeout(() => {
+          validateWorkspacePathInput(settingWorkspaceRoot.value);
+        }, 350);
+      });
+    }
+
+    async function validateWorkspacePathInput(p) {
+      if (!workspacePathValidationBadge) return;
+      if (!p || !p.trim()) {
+        workspacePathValidationBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-500';
+        workspacePathValidationBadge.innerText = 'empty path';
+        return;
+      }
+      try {
+        const res = await fetch('/api/settings/validate_path', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: p.trim() })
+        });
+        const data = await res.json();
+        if (data.exists && data.is_dir) {
+          workspacePathValidationBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400';
+          workspacePathValidationBadge.innerText = 'folder exists';
+        } else if (data.exists) {
+          workspacePathValidationBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300';
+          workspacePathValidationBadge.innerText = 'file (not folder)';
+        } else {
+          workspacePathValidationBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400';
+          workspacePathValidationBadge.innerText = 'path not found';
+        }
+      } catch (e) {
+        workspacePathValidationBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-500';
+        workspacePathValidationBadge.innerText = 'unknown';
+      }
+    }
+
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', async () => {
+        saveSettingsBtn.disabled = true;
+        saveSettingsBtn.innerText = 'Saving...';
+        if (settingsFeedbackMsg) {
+          settingsFeedbackMsg.className = 'text-xs font-sans text-cyan-400 animate-pulse';
+          settingsFeedbackMsg.innerText = 'Testing credentials & saving...';
+        }
+
+        const payload = {
+          auth_mode: currentAuthMode,
+          gcp_project: settingGcpProject ? settingGcpProject.value.trim() : '',
+          gcp_location: (settingGcpLocation && settingGcpLocation.value.trim()) ? settingGcpLocation.value.trim() : 'global',
+          api_key: settingApiKey ? settingApiKey.value.trim() : '',
+          workspace_root: settingWorkspaceRoot ? settingWorkspaceRoot.value.trim() : '',
+          vps_ssh_target: settingVpsTarget ? settingVpsTarget.value.trim() : '',
+          vps_remote_dir: settingVpsDir ? settingVpsDir.value.trim() : '',
+          custom_instruction: settingCustomInstruction ? settingCustomInstruction.value.trim() : ''
+        };
+
+        try {
+          const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.success) {
+            currentSettings = data.settings;
+            if (settingsFeedbackMsg) {
+              settingsFeedbackMsg.className = 'text-xs font-sans text-emerald-400';
+              settingsFeedbackMsg.innerText = 'Settings saved successfully';
+            }
+            await loadStudioSettings();
+            cachedWorkspaceFiles = []; // invalidate workspace files cache
+            setTimeout(() => {
+              closeSettingsModal();
+              saveSettingsBtn.disabled = false;
+              saveSettingsBtn.innerText = 'Save Settings';
+            }, 800);
+          } else {
+            if (settingsFeedbackMsg) {
+              settingsFeedbackMsg.className = 'text-xs font-sans text-rose-400';
+              settingsFeedbackMsg.innerText = data.message || 'Failed to save settings';
+            }
+            saveSettingsBtn.disabled = false;
+            saveSettingsBtn.innerText = 'Save Settings';
+          }
+        } catch (err) {
+          if (settingsFeedbackMsg) {
+            settingsFeedbackMsg.className = 'text-xs font-sans text-rose-400';
+            settingsFeedbackMsg.innerText = 'Network error: ' + err.message;
+          }
+          saveSettingsBtn.disabled = false;
+          saveSettingsBtn.innerText = 'Save Settings';
+        }
+      });
+    }
+
+    // Init: Load conversations & open latest or start new
+    async function init() {
+      await loadStudioSettings();
+      await loadConversationsList();
+      if (conversations.length > 0) {
+        await switchConversation(conversations[0].id);
+      } else {
+        startNewChat();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

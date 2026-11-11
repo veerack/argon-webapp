@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.env*
+venv/
+env/
+
+# User Data & Settings (Keeps user data local and blank for clones)
+data/
+*.tmp
+sync_transcript.py
+
+# Operating System
+.DS_Store
+Thumbs.db
