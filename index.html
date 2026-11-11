@@ -130,6 +130,126 @@
       font-family: ui-monospace, monospace;
       color: #64748b;
     }
+
+    /* Glass Thought Card with Specular Shine */
+    .glass-thought-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.875rem;
+      background: linear-gradient(135deg, rgba(16, 19, 29, 0.88) 0%, rgba(9, 11, 17, 0.96) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.7), 
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+                  inset 0 -1px 0 0 rgba(0, 0, 0, 0.4);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .glass-thought-card:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 14px 40px -6px rgba(0, 0, 0, 0.75), 
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+    }
+
+    /* Shining Glass Diagonal Light Beam Sweep Effect */
+    .glass-shine-beam {
+      position: absolute;
+      top: -70%;
+      left: -90%;
+      width: 280%;
+      height: 240%;
+      background: linear-gradient(
+        115deg,
+        transparent 0%,
+        transparent 43%,
+        rgba(255, 255, 255, 0.01) 46%,
+        rgba(255, 255, 255, 0.08) 48.5%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(56, 189, 248, 0.25) 50.8%,
+        rgba(255, 255, 255, 0.09) 52%,
+        rgba(255, 255, 255, 0.01) 54.5%,
+        transparent 58%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 15;
+      animation: diagonalGlassShine 5.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+    }
+
+    @keyframes diagonalGlassShine {
+      0% {
+        transform: translateX(-70%);
+      }
+      26% {
+        transform: translateX(70%);
+      }
+      100% {
+        transform: translateX(70%);
+      }
+    }
+
+    /* Thoughts Typography & Formatting */
+    .prose-thoughts {
+      color: #cbd5e1;
+      font-size: 0.8125rem;
+      line-height: 1.65;
+    }
+    .prose-thoughts p {
+      margin-bottom: 0.65rem;
+    }
+    .prose-thoughts p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-thoughts strong {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+    .prose-thoughts em {
+      color: #94a3b8;
+    }
+    .prose-thoughts h1, .prose-thoughts h2, .prose-thoughts h3, .prose-thoughts h4 {
+      color: #f8fafc;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-top: 0.85rem;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.01em;
+    }
+    .prose-thoughts ul, .prose-thoughts ol {
+      margin-left: 1.25rem;
+      margin-bottom: 0.65rem;
+    }
+    .prose-thoughts ul { list-style-type: disc; }
+    .prose-thoughts ol { list-style-type: decimal; }
+    .prose-thoughts li {
+      margin-bottom: 0.2rem;
+    }
+    .prose-thoughts code:not(pre code) {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #38bdf8;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.3rem;
+      font-size: 0.76rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .prose-thoughts pre {
+      background: rgba(8, 9, 14, 0.8) !important;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 0.5rem;
+      padding: 0.6rem 0.8rem;
+      margin: 0.5rem 0;
+      overflow-x: auto;
+    }
+    .prose-thoughts pre code {
+      font-size: 0.76rem;
+      line-height: 1.5;
+      color: #94a3b8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .prose-thoughts::-webkit-scrollbar { width: 4px; height: 4px; }
+    .prose-thoughts::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+    .prose-thoughts::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
   </style>
 </head>
 <body class="h-full flex flex-col antialiased overflow-hidden select-none">
@@ -403,6 +523,49 @@
       </div>
 
     </main>
+
+    <!-- Right Side: Code / File Viewer Sidebar (Antigravity Style - Image 4) -->
+    <aside id="fileViewerSidebar" class="hidden w-[46%] max-w-2xl min-w-[360px] bg-[#0c0d13] border-l border-[#1a1c26] flex flex-col h-full z-20 shrink-0 shadow-2xl transition-all duration-200">
+      <!-- File Header -->
+      <div class="h-12 border-b border-[#1a1c26] px-4 flex items-center justify-between bg-[#0e1017] shrink-0">
+        <div class="flex items-center gap-2 min-w-0 flex-1 mr-2">
+          <span class="text-emerald-400 font-mono text-xs font-bold">&gt;_</span>
+          <div id="fvBreadcrumbs" class="text-xs font-mono text-zinc-300 truncate" title=""></div>
+          <span id="fvLineBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/15 border border-blue-500/30 text-blue-400 shrink-0"></span>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button id="fvCopyBtn" type="button" onclick="copyViewerContent()" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition" title="Copy file content">
+            <svg id="fvCopyIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button type="button" onclick="closeFileViewer()" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition" title="Close file viewer (Esc)">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- File Content Viewer -->
+      <div id="fvBody" class="flex-1 overflow-auto bg-[#08090d] font-mono text-xs select-text">
+        <div id="fvLoading" class="hidden p-8 text-center text-zinc-500 text-xs">Loading file...</div>
+        <div id="fvError" class="hidden p-6 text-rose-400 text-xs font-mono"></div>
+        <div id="fvLinesContainer" class="py-2"></div>
+      </div>
+
+      <!-- File Footer: Quick Actions -->
+      <div class="p-2.5 px-4 border-t border-[#1a1c26] bg-[#0c0d12] flex items-center justify-between text-xs text-zinc-400 shrink-0">
+        <span id="fvFileInfo" class="font-mono text-[11px] text-zinc-500">0 lines</span>
+        <button type="button" onclick="quoteViewerSelectionIntoChat()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141722] hover:bg-[#1c2030] border border-border text-zinc-300 hover:text-white font-sans text-xs transition" title="Quote this file or highlighted lines into chat prompt">
+          <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span>Quote into chat</span>
+        </button>
+      </div>
+    </aside>
   </div>
 
   <!-- Workspace File Picker Modal -->
@@ -1595,6 +1758,578 @@ note: git commands are strictly prohibited in this environment.</div>
       }
     }
 
+    // --- LCS Diff Calculation & Helpers ---
+    function computeLcsDiff(targetLines, replacementLines) {
+      const m = targetLines.length;
+      const n = replacementLines.length;
+      if (m === 0) return replacementLines.map(text => ({ type: 'added', text }));
+      if (n === 0) return targetLines.map(text => ({ type: 'removed', text }));
+
+      const dp = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
+      for (let i = 0; i < m; i++) {
+        for (let j = 0; j < n; j++) {
+          if (targetLines[i] === replacementLines[j]) {
+            dp[i + 1][j + 1] = dp[i][j] + 1;
+          } else {
+            dp[i + 1][j + 1] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+          }
+        }
+      }
+
+      let i = m, j = n;
+      const revOps = [];
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && targetLines[i - 1] === replacementLines[j - 1]) {
+          revOps.push({ type: 'normal', text: targetLines[i - 1] });
+          i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          revOps.push({ type: 'added', text: replacementLines[j - 1] });
+          j--;
+        } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+          revOps.push({ type: 'removed', text: targetLines[i - 1] });
+          i--;
+        }
+      }
+      return revOps.reverse();
+    }
+
+    function computeLineDiffCounts(target, replacement) {
+      if (!target && !replacement) return { added: 0, removed: 0 };
+      const targetLines = target ? target.split('\n') : [];
+      const replacementLines = replacement ? replacement.split('\n') : [];
+      const ops = computeLcsDiff(targetLines, replacementLines);
+      let added = 0;
+      let removed = 0;
+      for (const op of ops) {
+        if (op.type === 'added') added++;
+        else if (op.type === 'removed') removed++;
+      }
+      return { added, removed };
+    }
+
+    function generateDiffLines(fullFileContent, target, replacement, isWrite = false) {
+      if (isWrite && !target) {
+        const replLines = replacement ? replacement.split('\n') : (fullFileContent ? fullFileContent.split('\n') : []);
+        return {
+          lines: replLines.map((text, idx) => ({ type: 'added', text, newLine: idx + 1, oldLine: null })),
+          diffStartIdx: 0
+        };
+      }
+
+      if (!fullFileContent) return { lines: [], diffStartIdx: 0 };
+      const targetLines = target ? target.split('\n') : [];
+      const replacementLines = replacement ? replacement.split('\n') : [];
+
+      let insertIdx = -1;
+      let isTargetInFile = false;
+      if (replacement && fullFileContent.includes(replacement)) {
+        insertIdx = fullFileContent.indexOf(replacement);
+      } else if (target && fullFileContent.includes(target)) {
+        insertIdx = fullFileContent.indexOf(target);
+        isTargetInFile = true;
+      }
+
+      let beforeContent = '';
+      let afterContent = '';
+      if (insertIdx !== -1) {
+        beforeContent = fullFileContent.substring(0, insertIdx);
+        const matchedLen = isTargetInFile ? target.length : replacement.length;
+        afterContent = fullFileContent.substring(insertIdx + matchedLen);
+      } else {
+        const searchLine = (replacementLines[0] || targetLines[0] || '').trim();
+        if (searchLine) {
+          const allLines = fullFileContent.split('\n');
+          const foundIdx = allLines.findIndex(l => l.trim() === searchLine);
+          if (foundIdx !== -1) {
+            beforeContent = allLines.slice(0, foundIdx).join('\n') + '\n';
+            afterContent = allLines.slice(foundIdx + (isTargetInFile ? targetLines.length : replacementLines.length)).join('\n');
+          } else {
+            beforeContent = '';
+            afterContent = fullFileContent;
+          }
+        } else {
+          afterContent = fullFileContent;
+        }
+      }
+
+      const beforeLines = beforeContent ? beforeContent.split('\n') : [];
+      if (beforeContent.endsWith('\n') && beforeLines.length > 0) beforeLines.pop();
+      const afterLines = afterContent ? afterContent.split('\n') : [];
+      if (afterContent.startsWith('\n')) afterLines.shift();
+
+      const result = [];
+      let curOldLine = 1;
+      let curNewLine = 1;
+
+      for (const line of beforeLines) {
+        result.push({ type: 'normal', text: line, oldLine: curOldLine++, newLine: curNewLine++ });
+      }
+
+      const diffStartIdx = result.length;
+      const diffOps = computeLcsDiff(targetLines, replacementLines);
+      for (const op of diffOps) {
+        if (op.type === 'removed') {
+          result.push({ type: 'removed', text: op.text, oldLine: curOldLine++, newLine: null });
+        } else if (op.type === 'added') {
+          result.push({ type: 'added', text: op.text, oldLine: null, newLine: curNewLine++ });
+        } else {
+          result.push({ type: 'normal', text: op.text, oldLine: curOldLine++, newLine: curNewLine++ });
+        }
+      }
+
+      for (const line of afterLines) {
+        result.push({ type: 'normal', text: line, oldLine: curOldLine++, newLine: curNewLine++ });
+      }
+
+      return { lines: result, diffStartIdx };
+    }
+
+    window.toolCallDiffRegistry = {};
+
+    window.openFileViewerDiff = async function(actionId) {
+      const item = window.toolCallDiffRegistry ? window.toolCallDiffRegistry[actionId] : null;
+      if (!item) return;
+      await openFileViewerWithDiff(item.filePath, item.target, item.replacement, item.isWrite, item.linesAdded, item.linesRemoved);
+    };
+
+    window.openFileViewerWithDiff = async function(filePath, target, replacement, isWrite, linesAdded, linesRemoved) {
+      if (!filePath) return;
+      const sidebar = document.getElementById('fileViewerSidebar');
+      const breadcrumbs = document.getElementById('fvBreadcrumbs');
+      const lineBadge = document.getElementById('fvLineBadge');
+      const linesContainer = document.getElementById('fvLinesContainer');
+      const loading = document.getElementById('fvLoading');
+      const errorEl = document.getElementById('fvError');
+      const infoEl = document.getElementById('fvFileInfo');
+
+      if (!sidebar) return;
+      sidebar.classList.remove('hidden');
+
+      const cleanPath = filePath.replace(/\\/g, '/');
+      const parts = cleanPath.split('/').filter(Boolean);
+      const filename = parts.pop() || filePath;
+      const dirPath = parts.join(' > ');
+      breadcrumbs.innerHTML = `
+        <span class="text-zinc-500">${dirPath ? escapeHtml(dirPath) + ' &gt; ' : ''}</span>
+        <span class="text-zinc-100 font-semibold">${escapeHtml(filename)}</span>
+      `;
+      breadcrumbs.title = filePath;
+
+      lineBadge.innerHTML = `
+        <div class="flex items-center gap-1.5 font-mono text-[11px] font-semibold">
+          ${linesAdded > 0 ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">+${linesAdded}</span>` : ''}
+          ${linesRemoved > 0 ? `<span class="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">-${linesRemoved}</span>` : ''}
+          <span class="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400 text-[10px] uppercase font-sans">Diff</span>
+        </div>
+      `;
+      lineBadge.classList.remove('hidden');
+
+      currentViewerPath = filePath;
+      currentViewerHighlightedLines = null;
+
+      linesContainer.innerHTML = '';
+      loading.classList.remove('hidden');
+      errorEl.classList.add('hidden');
+      infoEl.innerText = 'Loading diff...';
+
+      try {
+        const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(filePath)}`);
+        const data = await res.json();
+        loading.classList.add('hidden');
+
+        if (!res.ok || data.error) {
+          errorEl.innerText = data.error || 'Failed to load file';
+          errorEl.classList.remove('hidden');
+          infoEl.innerText = 'Error';
+          return;
+        }
+
+        const currentContent = data.content || '';
+        infoEl.innerText = `${linesAdded || 0} added, ${linesRemoved || 0} removed`;
+
+        const diffResult = generateDiffLines(currentContent, target, replacement, isWrite);
+        const diffLines = diffResult.lines;
+
+        let html = '';
+        let firstChangedFound = false;
+
+        diffLines.forEach((lineItem, idx) => {
+          const isFirstChanged = !firstChangedFound && (lineItem.type === 'removed' || lineItem.type === 'added');
+          if (isFirstChanged) firstChangedFound = true;
+          const targetAttr = isFirstChanged ? 'id="fv-diff-target"' : '';
+
+          if (lineItem.type === 'removed') {
+            html += `
+              <div ${targetAttr} class="flex leading-5 py-0.5 bg-rose-500/15 border-l-2 border-rose-500 hover:bg-rose-500/25 transition">
+                <span class="w-12 select-none text-right pr-3.5 text-rose-400 font-bold font-mono text-[11px] shrink-0 border-r border-rose-500/30 bg-rose-950/30">-</span>
+                <span class="pl-3.5 pr-4 text-rose-200 whitespace-pre font-mono text-xs overflow-x-visible">${escapeHtml(lineItem.text)}</span>
+              </div>
+            `;
+          } else if (lineItem.type === 'added') {
+            html += `
+              <div ${targetAttr} class="flex leading-5 py-0.5 bg-emerald-500/15 border-l-2 border-emerald-500 hover:bg-emerald-500/25 transition">
+                <span class="w-12 select-none text-right pr-3.5 text-emerald-400 font-bold font-mono text-[11px] shrink-0 border-r border-emerald-500/30 bg-emerald-950/30">+</span>
+                <span class="pl-3.5 pr-4 text-emerald-200 whitespace-pre font-mono text-xs overflow-x-visible">${escapeHtml(lineItem.text)}</span>
+              </div>
+            `;
+          } else {
+            const lNum = lineItem.newLine || lineItem.oldLine || (idx + 1);
+            html += `
+              <div class="flex leading-5 py-0.5 hover:bg-white/[0.03] transition">
+                <span class="w-12 select-none text-right pr-3.5 text-zinc-600 font-mono text-[11px] shrink-0 border-r border-[#1a1c26]">${lNum}</span>
+                <span class="pl-3.5 pr-4 text-zinc-200 whitespace-pre font-mono text-xs overflow-x-visible">${escapeHtml(lineItem.text)}</span>
+              </div>
+            `;
+          }
+        });
+
+        linesContainer.innerHTML = html;
+
+        setTimeout(() => {
+          const targetEl = document.getElementById('fv-diff-target');
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 120);
+
+      } catch (err) {
+        loading.classList.add('hidden');
+        errorEl.innerText = 'Error loading diff: ' + err.message;
+        errorEl.classList.remove('hidden');
+        infoEl.innerText = 'Error';
+      }
+    };
+
+    // --- File Viewer Sidebar State & Functions (Antigravity Style - Image 4) ---
+    let currentViewerPath = '';
+    let currentViewerContent = '';
+    let currentViewerHighlightedLines = null;
+
+    window.openFileViewer = async function(filePath, startLine = null, endLine = null) {
+      if (!filePath) return;
+      const sidebar = document.getElementById('fileViewerSidebar');
+      const breadcrumbs = document.getElementById('fvBreadcrumbs');
+      const lineBadge = document.getElementById('fvLineBadge');
+      const linesContainer = document.getElementById('fvLinesContainer');
+      const loading = document.getElementById('fvLoading');
+      const errorEl = document.getElementById('fvError');
+      const infoEl = document.getElementById('fvFileInfo');
+
+      if (!sidebar) return;
+      sidebar.classList.remove('hidden');
+
+      // Breadcrumbs
+      const cleanPath = filePath.replace(/\\/g, '/');
+      const parts = cleanPath.split('/').filter(Boolean);
+      const filename = parts.pop() || filePath;
+      const dirPath = parts.join(' > ');
+      breadcrumbs.innerHTML = `
+        <span class="text-zinc-500">${dirPath ? escapeHtml(dirPath) + ' &gt; ' : ''}</span>
+        <span class="text-zinc-100 font-semibold">${escapeHtml(filename)}</span>
+      `;
+      breadcrumbs.title = filePath;
+
+      // Line badge
+      if (startLine && endLine) {
+        lineBadge.innerText = `#L${startLine}-${endLine}`;
+        lineBadge.classList.remove('hidden');
+      } else {
+        lineBadge.classList.add('hidden');
+      }
+
+      currentViewerPath = filePath;
+      currentViewerHighlightedLines = (startLine && endLine) ? { start: parseInt(startLine), end: parseInt(endLine) } : null;
+
+      linesContainer.innerHTML = '';
+      loading.classList.remove('hidden');
+      errorEl.classList.add('hidden');
+      infoEl.innerText = 'Loading...';
+
+      try {
+        const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(filePath)}`);
+        const data = await res.json();
+        loading.classList.add('hidden');
+
+        if (!res.ok || data.error) {
+          errorEl.innerText = data.error || 'Failed to load file';
+          errorEl.classList.remove('hidden');
+          infoEl.innerText = 'Error';
+          return;
+        }
+
+        currentViewerContent = data.content || '';
+        const lines = data.lines || currentViewerContent.split('\n');
+        infoEl.innerText = `${lines.length} lines`;
+
+        let html = '';
+        lines.forEach((lineText, idx) => {
+          const lNum = idx + 1;
+          const isHighlighted = (startLine && endLine && lNum >= startLine && lNum <= endLine);
+          html += `
+            <div id="fv-line-${lNum}" class="flex leading-5 py-0.5 hover:bg-white/[0.03] transition ${isHighlighted ? 'bg-[#1c3258]/60 border-l-2 border-[#388bfd]' : ''}">
+              <span class="w-12 select-none text-right pr-3.5 ${isHighlighted ? 'text-blue-300 font-semibold' : 'text-zinc-600'} font-mono text-[11px] shrink-0 border-r border-[#1a1c26]">${lNum}</span>
+              <span class="pl-3.5 pr-4 text-zinc-200 whitespace-pre font-mono text-xs overflow-x-visible">${escapeHtml(lineText)}</span>
+            </div>
+          `;
+        });
+        linesContainer.innerHTML = html;
+
+        if (startLine) {
+          setTimeout(() => {
+            const targetEl = document.getElementById('fv-line-' + startLine);
+            if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 80);
+        }
+      } catch (err) {
+        loading.classList.add('hidden');
+        errorEl.innerText = 'Error fetching file: ' + err.message;
+        errorEl.classList.remove('hidden');
+        infoEl.innerText = 'Error';
+      }
+    };
+
+    window.closeFileViewer = function() {
+      const sidebar = document.getElementById('fileViewerSidebar');
+      if (sidebar) sidebar.classList.add('hidden');
+    };
+
+    window.copyViewerContent = function() {
+      if (!currentViewerContent) return;
+      let textToCopy = currentViewerContent;
+      if (currentViewerHighlightedLines) {
+        const lines = currentViewerContent.split('\n');
+        const slice = lines.slice(currentViewerHighlightedLines.start - 1, currentViewerHighlightedLines.end);
+        textToCopy = slice.join('\n');
+      }
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const btn = document.getElementById('fvCopyBtn');
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          setTimeout(() => btn.innerHTML = orig, 1800);
+        }
+      });
+    };
+
+    window.quoteViewerSelectionIntoChat = function() {
+      if (!currentViewerContent) return;
+      let snippet = currentViewerContent;
+      let label = currentViewerPath;
+      if (currentViewerHighlightedLines) {
+        const lines = currentViewerContent.split('\n');
+        snippet = lines.slice(currentViewerHighlightedLines.start - 1, currentViewerHighlightedLines.end).join('\n');
+        label += ` #L${currentViewerHighlightedLines.start}-${currentViewerHighlightedLines.end}`;
+      }
+      const quoteText = `\`\`\`${label}\n${snippet}\n\`\`\`\n\n`;
+      const input = document.getElementById('messageInput');
+      if (input) {
+        input.value = quoteText + (input.value ? input.value : '');
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+        updateSendButtonState();
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const fv = document.getElementById('fileViewerSidebar');
+        if (fv && !fv.classList.contains('hidden')) {
+          closeFileViewer();
+        }
+      }
+    });
+
+    // --- Antigravity Action Tree Formatting Helpers (Images 2 & 3) ---
+    function formatFileBasename(pathStr) {
+      if (!pathStr) return '';
+      const clean = pathStr.replace(/\\/g, '/');
+      const parts = clean.split('/').filter(Boolean);
+      return parts.pop() || pathStr;
+    }
+
+    function getFriendlyCommandTitle(cmd) {
+      if (!cmd) return 'run_command';
+      const clean = cmd.trim();
+      if (clean.includes('Test-Path')) {
+        const match = clean.match(/Test-Path\s+["']?([^"'\s]+)["']?/i);
+        return match ? `check ${formatFileBasename(match[1])} exists` : 'check path exists';
+      }
+      if (clean.includes('Test-NetConnection')) {
+        const matchPort = clean.match(/-Port\s+(\d+)/i);
+        return matchPort ? `check if port ${matchPort[1]} is listening` : 'check connection';
+      }
+      if (clean.includes('mount-vps')) return 'mount VPS to V:\\';
+      if (clean.includes('sync-devbox')) return 'sync files to Devbox';
+      if (clean.includes('npm run') || clean.includes('pnpm run') || clean.includes('yarn')) {
+        return clean.substring(0, 36);
+      }
+      if (clean.length > 40) return clean.substring(0, 37) + '...';
+      return clean;
+    }
+
+    window.toggleActionDetail = function(actionId) {
+      const detail = document.getElementById('detail-' + actionId);
+      const chevron = document.getElementById('chevron-' + actionId);
+      if (!detail) return;
+      detail.classList.toggle('hidden');
+      if (chevron) {
+        chevron.style.transform = detail.classList.contains('hidden') ? '' : 'rotate(90deg)';
+      }
+    };
+
+    window.toggleActionTree = function(treeId) {
+      const tree = document.getElementById('treeBody-' + treeId);
+      const chevron = document.getElementById('treeChevron-' + treeId);
+      if (!tree) return;
+      tree.classList.toggle('hidden');
+      if (chevron) {
+        chevron.style.transform = tree.classList.contains('hidden') ? 'rotate(-90deg)' : '';
+      }
+    };
+
+    function renderActionTree(toolCalls, containerId, isLive = false) {
+      if (!toolCalls || toolCalls.length === 0) return '';
+      
+      const itemsHtml = toolCalls.map((tc, idx) => {
+        const actionId = `act-${containerId}-${idx}`;
+        if (tc.name === 'run_command') {
+          const cmd = (tc.args && tc.args.command) ? tc.args.command : (typeof tc.args === 'string' ? tc.args : '');
+          const output = tc.output || tc.result_preview || '';
+          const friendlyTitle = getFriendlyCommandTitle(cmd);
+          return `
+            <div class="action-item my-1 font-mono text-xs">
+              <div class="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200 py-0.5 select-none transition group" onclick="toggleActionDetail('${actionId}')">
+                <span class="font-sans text-xs text-zinc-300 group-hover:text-white">Ran ${escapeHtml(friendlyTitle)}</span>
+                <svg id="chevron-${actionId}" class="w-3 h-3 text-zinc-500 transition-transform group-hover:text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div id="detail-${actionId}" class="hidden mt-1 p-2.5 rounded-xl bg-[#090a10] border border-border/80 text-xs font-mono select-text">
+                <div class="text-emerald-400 font-semibold mb-1 flex items-center gap-1.5">
+                  <span class="text-zinc-500 font-mono">$</span>
+                  <span class="text-zinc-100 font-mono">${escapeHtml(cmd)}</span>
+                </div>
+                <div class="text-zinc-300 whitespace-pre-wrap max-h-56 overflow-y-auto leading-relaxed text-[11px] font-mono">
+                  ${escapeHtml(output || '(completed with no output)')}
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (tc.name === 'read_file') {
+          const filePath = (tc.args && tc.args.path) ? tc.args.path : (tc.path || '');
+          const bname = formatFileBasename(filePath);
+          const sLine = tc.start_line;
+          const eLine = tc.end_line;
+          const lineStr = (sLine && eLine) ? `#L${sLine}-${eLine}` : '';
+          return `
+            <div class="action-item my-1 font-mono text-xs">
+              <div class="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-100 py-0.5 select-none transition group" onclick="openFileViewer('${escapeHtml(filePath)}', ${sLine || 'null'}, ${eLine || 'null'})" title="Click to open file in sidebar">
+                <span class="font-sans text-xs text-zinc-400 group-hover:text-zinc-300">Analyzed</span>
+                <span class="text-cyan-400 font-mono text-xs flex items-center gap-1 font-semibold group-hover:underline">
+                  <span>&gt;_</span>
+                  <span>${escapeHtml(bname)}</span>
+                </span>
+                ${lineStr ? `<span class="text-zinc-500 text-[11px] font-mono">${escapeHtml(lineStr)}</span>` : ''}
+              </div>
+            </div>
+          `;
+        } else if (tc.name === 'write_file' || tc.name === 'edit_file') {
+          const filePath = (tc.args && tc.args.path) ? tc.args.path : (tc.path || '');
+          const bname = formatFileBasename(filePath);
+          const actionWord = tc.name === 'write_file' ? 'Created' : 'Modified';
+
+          let linesAdded = tc.lines_added;
+          let linesRemoved = tc.lines_removed;
+
+          if (linesAdded === undefined || linesAdded === null) {
+            if (tc.name === 'edit_file') {
+              const diffCounts = computeLineDiffCounts(tc.args ? tc.args.target : '', tc.args ? tc.args.replacement : '');
+              linesAdded = diffCounts.added;
+              linesRemoved = diffCounts.removed;
+            } else if (tc.name === 'write_file') {
+              const cText = (tc.args && tc.args.content) ? tc.args.content : '';
+              linesAdded = cText ? cText.split('\n').length : 0;
+              linesRemoved = 0;
+            }
+          }
+
+          // Register in global diff registry for safe click retrieval
+          window.toolCallDiffRegistry = window.toolCallDiffRegistry || {};
+          window.toolCallDiffRegistry[actionId] = {
+            filePath,
+            target: (tc.args && tc.args.target) ? tc.args.target : '',
+            replacement: (tc.args && tc.args.replacement) ? tc.args.replacement : ((tc.args && tc.args.content) ? tc.args.content : ''),
+            isWrite: tc.name === 'write_file',
+            linesAdded: linesAdded || 0,
+            linesRemoved: linesRemoved || 0
+          };
+
+          return `
+            <div class="action-item my-1 font-mono text-xs">
+              <div class="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-100 py-0.5 select-none transition group" onclick="openFileViewerDiff('${actionId}')" title="Click to view diff in sidebar">
+                <span class="font-sans text-xs text-zinc-400 group-hover:text-zinc-300">${actionWord}</span>
+                <span class="text-cyan-400 font-mono text-xs flex items-center gap-1 font-semibold group-hover:underline">
+                  <span>&gt;_</span>
+                  <span>${escapeHtml(bname)}</span>
+                </span>
+                ${linesAdded > 0 ? `<span class="text-emerald-400 font-mono text-[11px] font-semibold ml-1">+${linesAdded}</span>` : ''}
+                ${linesRemoved > 0 ? `<span class="text-rose-400 font-mono text-[11px] font-semibold ml-0.5">-${linesRemoved}</span>` : ''}
+              </div>
+            </div>
+          `;
+        } else if (tc.name === 'search_code') {
+          const query = (tc.args && tc.args.query) ? tc.args.query : '';
+          const output = tc.output || tc.result_preview || '';
+          return `
+            <div class="action-item my-1 font-mono text-xs">
+              <div class="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200 py-0.5 select-none transition group" onclick="toggleActionDetail('${actionId}')">
+                <span class="font-sans text-xs text-zinc-400 group-hover:text-zinc-300">Searched</span>
+                <span class="text-amber-400 font-mono text-[11px] font-semibold">'${escapeHtml(query)}'</span>
+                <svg id="chevron-${actionId}" class="w-3 h-3 text-zinc-500 transition-transform group-hover:text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div id="detail-${actionId}" class="hidden mt-1 p-2 rounded-xl bg-[#090a10] border border-border/80 text-[11px] font-mono text-zinc-300 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                ${escapeHtml(output)}
+              </div>
+            </div>
+          `;
+        } else if (tc.name === 'list_directory') {
+          const dirPath = (tc.args && tc.args.path) ? tc.args.path : 'workspace root';
+          const output = tc.output || tc.result_preview || '';
+          return `
+            <div class="action-item my-1 font-mono text-xs">
+              <div class="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200 py-0.5 select-none transition group" onclick="toggleActionDetail('${actionId}')">
+                <span class="font-sans text-xs text-zinc-400 group-hover:text-zinc-300">Explored</span>
+                <span class="text-zinc-300 font-mono text-[11px]">${escapeHtml(dirPath)}</span>
+                <svg id="chevron-${actionId}" class="w-3 h-3 text-zinc-500 transition-transform group-hover:text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div id="detail-${actionId}" class="hidden mt-1 p-2 rounded-xl bg-[#090a10] border border-border/80 text-[11px] font-mono text-zinc-300 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                ${escapeHtml(output)}
+              </div>
+            </div>
+          `;
+        }
+        return '';
+      }).join('');
+
+      return `
+        <div class="mt-2.5 text-xs font-sans text-zinc-400 select-none">
+          <div class="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200 transition group mb-1.5" onclick="toggleActionTree('${containerId}')">
+            <span class="font-medium text-xs text-zinc-300 group-hover:text-white">Explored files, ran commands</span>
+            <svg id="treeChevron-${containerId}" class="w-3.5 h-3.5 text-zinc-500 transition-transform group-hover:text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div id="treeBody-${containerId}" class="ml-1 pl-3 border-l border-zinc-800/80 space-y-0.5">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    }
+
     window.toggleTerminalCollapse = function(toolId) {
       const body = document.getElementById('body-' + toolId);
       const arrow = document.getElementById('arrow-' + toolId);
@@ -1605,59 +2340,50 @@ note: git commands are strictly prohibited in this environment.</div>
       }
     };
 
-    function renderToolCallCard(tc, isLive = false) {
-      if (tc.name === 'run_command') {
-        const cmd = (tc.args && tc.args.command) ? tc.args.command : (typeof tc.args === 'string' ? tc.args : '');
-        const target = (tc.args && tc.args.target) ? tc.args.target : 'local';
-        const output = tc.output || tc.result_preview || '';
-        const isProhibited = output.includes('strictly prohibited');
-        const isError = !isProhibited && (output.startsWith('error') || output.includes('exit code: 1') || output.includes('exit code: 2'));
-        const badgeColor = isProhibited ? 'text-amber-400 border-amber-500/20 bg-amber-500/10' :
-                           isError ? 'text-rose-400 border-rose-500/20 bg-rose-500/10' :
-                           isLive ? 'text-cyan-400 border-cyan-500/20 bg-cyan-500/10' :
-                           'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
-        const badgeText = isProhibited ? 'prohibited' : isError ? 'failed' : (isLive ? 'running...' : 'success');
-        const toolId = 'term-' + Math.random().toString(36).substring(2, 9);
-        const hasOutput = Boolean(output && output !== 'Success');
-
-        return `
-          <div class="rounded-xl bg-[#0e1017] border border-border/80 overflow-hidden text-xs font-mono mb-1.5 shadow-sm">
-            <div class="p-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-[#141622] transition" onclick="toggleTerminalCollapse('${toolId}')">
-              <div class="flex items-center gap-2 truncate">
-                <span class="text-emerald-400 font-bold">&gt;_</span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] bg-[#181a26] border border-border text-zinc-400 uppercase">${escapeHtml(target)}</span>
-                <span class="text-zinc-200 truncate font-semibold">$ ${escapeHtml(cmd || 'run_command')}</span>
-              </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <span class="text-[10px] ${badgeColor} px-2 py-0.5 rounded border lowercase">${badgeText}</span>
-                <svg id="arrow-${toolId}" class="w-3.5 h-3.5 text-zinc-500 transition-transform ${hasOutput ? '' : 'hidden'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+    function renderGlassThoughtCard(thoughts, id, isLive = false, durationStr = '') {
+      return `
+        <div id="${id}-card" class="glass-thought-card relative overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl transition-all duration-300">
+          <div class="glass-shine-beam"></div>
+          <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none"></div>
+          
+          <div class="px-3.5 py-2 flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] text-xs select-none">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-md bg-gradient-to-br from-cyan-500/20 to-blue-600/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                 </svg>
               </div>
+              <span class="font-medium text-zinc-300 tracking-wide text-[11px] uppercase">Reasoning Process</span>
+              ${isLive ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono animate-pulse">Streaming</span>' : (durationStr ? `<span class="text-[11px] font-mono text-zinc-500">${durationStr}</span>` : '')}
             </div>
-            ${hasOutput ? `
-              <div id="body-${toolId}" class="p-3 bg-[#08090d] border-t border-border/60 text-zinc-300 font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto select-text">
-                ${escapeHtml(output)}
-              </div>
-            ` : ''}
+            <button type="button" onclick="copyThoughtText('${id}')" id="${id}-copy-btn" title="Copy reasoning" class="px-2 py-0.5 rounded text-[11px] font-mono text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition flex items-center gap-1">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy</span>
+            </button>
           </div>
-        `;
-      }
 
-      return `
-        <div class="p-2 rounded-xl bg-[#12141c] border border-border text-xs font-mono text-zinc-300 flex items-center justify-between mb-1.5">
-          <div class="flex items-center gap-2 truncate">
-            <span class="text-emerald-400 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-400 shrink-0 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>${escapeHtml(tc.name)}</span></span>
-            <span class="text-zinc-500 truncate max-w-sm">${escapeHtml(tc.result_preview || JSON.stringify(tc.args || ''))}</span>
+          <div id="${id}-body" class="p-4 text-xs font-sans text-zinc-300 leading-relaxed max-h-80 overflow-y-auto select-text prose-thoughts">
+            ${renderMarkdownSafely(thoughts || '')}
           </div>
-          <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 lowercase">success</span>
         </div>
       `;
     }
 
-        window.toggleToolDrawer = function(index) {
-      const drawer = document.getElementById(`toolDrawer-${index}`);
-      if (drawer) drawer.classList.toggle('hidden');
+    window.copyThoughtText = function(id) {
+      const body = document.getElementById(`${id}-body`);
+      if (!body) return;
+      const text = body.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(`${id}-copy-btn`);
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<span class="text-emerald-400 text-[10px]">Copied!</span>`;
+          setTimeout(() => btn.innerHTML = orig, 1800);
+        }
+      });
     };
 
     window.copyMessageText = function(index) {
@@ -1676,6 +2402,24 @@ note: git commands are strictly prohibited in this environment.</div>
     window.toggleThoughtDrawer = function(index) {
       const drawer = document.getElementById(`thoughtContent-${index}`);
       const chevron = document.getElementById(`thoughtChevron-${index}`);
+      if (drawer) {
+        drawer.classList.toggle('hidden');
+        if (chevron) chevron.classList.toggle('rotate-90');
+      }
+    };
+
+    window.toggleLiveThoughtStream = function() {
+      const stream = document.getElementById('liveThoughtStream');
+      const chevron = document.getElementById('liveThoughtChevron');
+      if (stream) {
+        stream.classList.toggle('hidden');
+        if (chevron) chevron.classList.toggle('rotate-90');
+      }
+    };
+
+    window.toggleLiveThoughtFinished = function() {
+      const drawer = document.getElementById('liveThoughtDrawerFinished');
+      const chevron = document.getElementById('liveChevronFinished');
       if (drawer) {
         drawer.classList.toggle('hidden');
         if (chevron) chevron.classList.toggle('rotate-90');
@@ -1725,27 +2469,32 @@ note: git commands are strictly prohibited in this environment.</div>
           if (msg.is_generating) {
             const elapsed = msg.started_at ? Math.max(0, ((Date.now() / 1000) - msg.started_at)).toFixed(1) : '0.0';
             const hasThoughts = Boolean(msg.thoughts);
+            const hasTools = Boolean(msg.toolCalls && msg.toolCalls.length > 0);
+            const actionTreeHtml = hasTools ? renderActionTree(msg.toolCalls, 'live', true) : '';
+
             const thinkingHtml = `
-              <div id="liveThinkingContainer" class="mb-3.5 select-none">
+              <div id="liveThinkingContainer" class="sticky top-0 z-30 bg-[#0c0d11]/95 backdrop-blur-md py-2 border-b border-white/[0.04] mb-3.5 select-none transition-all shadow-lg">
                 <div class="inline-flex items-center gap-1.5 text-xs text-zinc-400">
                   <span class="w-1.5 h-1.5 rounded-full ${isArgon ? 'bg-emerald-400' : 'bg-cyan-400'} thinking-dot"></span>
-                  <span id="liveThinkingTimer">Thinking... (${elapsed}s) &gt;</span>
+                  <button type="button" onclick="toggleLiveThoughtStream()" class="hover:text-zinc-200 transition inline-flex items-center gap-1">
+                    <span id="liveThinkingTimer" class="font-medium">Thinking... (${elapsed}s)</span>
+                    <svg id="liveThoughtChevron" class="w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${hasThoughts ? 'rotate-90' : 'hidden'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
-                <div id="liveThoughtStream" class="${hasThoughts ? '' : 'hidden'} mt-2.5 p-3.5 rounded-xl bg-[#111218] border border-[#1f2230] text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">${escapeHtml(msg.thoughts || '')}</div>
-              </div>
-            `;
-
-            const hasTools = msg.toolCalls && msg.toolCalls.length > 0;
-            const toolsHtml = `
-              <div id="liveToolContainer" class="mb-3 space-y-1.5 ${hasTools ? '' : 'hidden'}">
-                ${(msg.toolCalls || []).map(tc => renderToolCallCard(tc, false)).join('')}
+                <div id="liveThoughtStream" class="${hasThoughts ? '' : 'hidden'} my-2.5">
+                  ${renderGlassThoughtCard(msg.thoughts || '', 'liveStreamThought', true)}
+                </div>
+                <div id="liveActionTreeContainer">
+                  ${actionTreeHtml}
+                </div>
               </div>
             `;
 
             return `
               <div class="mb-8" id="msg-${index}">
                 ${thinkingHtml}
-                ${toolsHtml}
                 <div id="liveContentStream" class="prose-custom">${renderMarkdownSafely(msg.text || '')}</div>
                 <div id="liveUsage" class="hidden mt-3 pt-2 border-t border-[#1a1c26] text-[11px] font-mono text-zinc-500"></div>
               </div>
@@ -1753,53 +2502,40 @@ note: git commands are strictly prohibited in this environment.</div>
           }
 
           let thinkingHtml = '';
-          if (msg.thoughts) {
+          const hasThoughts = Boolean(msg.thoughts);
+          const hasToolCalls = Boolean(msg.toolCalls && msg.toolCalls.length > 0);
+
+          if (hasThoughts || hasToolCalls) {
             let durationStr = '12s';
             if (msg.duration) {
               const sec = Math.round(msg.duration);
               durationStr = sec >= 60 ? `${Math.floor(sec / 60)}m` : `${sec}s`;
+            } else if (hasToolCalls) {
+              durationStr = `${Math.max(1, msg.toolCalls.length * 4)}s`;
             }
+
+            const actionTreeHtml = hasToolCalls ? renderActionTree(msg.toolCalls, index, false) : '';
+
             thinkingHtml = `
-              <div class="mb-3.5 select-none">
-                <button
-                  type="button"
-                  onclick="toggleThoughtDrawer(${index})"
-                  class="group inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition"
-                >
-                  <span>Worked for ${durationStr} &gt;</span>
-                </button>
-                <div id="thoughtContent-${index}" class="hidden mt-2.5 p-3.5 rounded-xl bg-[#111218] border border-[#1f2230] text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto">
-                  ${escapeHtml(msg.thoughts)}
+              <div class="mb-4 select-none">
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    ${hasThoughts ? `onclick="toggleThoughtDrawer(${index})"` : ''}
+                    class="group inline-flex items-center gap-1.5 text-xs text-zinc-400 ${hasThoughts ? 'hover:text-zinc-200 cursor-pointer' : 'cursor-default'} transition"
+                  >
+                    <span>Worked for ${durationStr}</span>
+                    <svg id="thoughtChevron-${index}" class="w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${hasThoughts ? '' : 'hidden'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
-              </div>
-            `;
-          }
-
-          let toolsHtml = '';
-          if (msg.toolCalls && msg.toolCalls.length > 0) {
-            let summaryText = `${msg.toolCalls.length} tool${msg.toolCalls.length > 1 ? 's' : ''} executed`;
-            const fileModCount = msg.toolCalls.filter(t => t.name === 'write_file' || t.name === 'edit_file').length;
-            if (fileModCount > 0) {
-              summaryText = `${fileModCount} file${fileModCount > 1 ? 's' : ''} changed`;
-            } else if (msg.toolCalls.some(t => t.name === 'run_command')) {
-              summaryText = `Terminal execution`;
-            }
-
-            toolsHtml = `
-              <div class="mt-4 pt-3 flex items-center justify-between border-t border-[#181a24]">
-                <button type="button" onclick="toggleToolDrawer(${index})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#13151f] hover:bg-[#1a1d2b] border border-[#222534] text-xs text-zinc-300 font-mono transition">
-                  <span>${escapeHtml(summaryText)} &gt;</span>
-                </button>
-                <button type="button" onclick="toggleToolDrawer(${index})" class="px-2.5 py-1 rounded-lg text-xs bg-[#181a24] hover:bg-[#202330] border border-[#292c3c] text-zinc-300 hover:text-white transition font-sans flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>Review</span>
-                </button>
-              </div>
-              <div id="toolDrawer-${index}" class="hidden mt-2.5 space-y-1.5">
-                ${msg.toolCalls.map(tc => renderToolCallCard(tc, false)).join('')}
+                ${hasThoughts ? `
+                  <div id="thoughtContent-${index}" class="hidden my-2.5">
+                    ${renderGlassThoughtCard(msg.thoughts, `thought-${index}`, false, durationStr)}
+                  </div>
+                ` : ''}
+                ${actionTreeHtml}
               </div>
             `;
           }
@@ -1811,7 +2547,6 @@ note: git commands are strictly prohibited in this environment.</div>
             <div class="mb-8" id="msg-${index}">
               ${thinkingHtml}
               <div class="prose-custom">${renderedContent}</div>
-              ${toolsHtml}
               <div class="mt-3 flex items-center justify-end gap-3 text-xs text-zinc-500 select-none">
                 <span class="text-[11px] font-mono text-zinc-500">${timeAgoStr}</span>
                 <button type="button" onclick="copyMessageText(${index})" id="copyBtn-${index}" title="Copy response" class="p-1 rounded hover:text-zinc-200 hover:bg-white/5 transition">
@@ -1936,7 +2671,6 @@ note: git commands are strictly prohibited in this environment.</div>
       const liveThoughtStream = document.getElementById('liveThoughtStream');
       const liveContentStream = document.getElementById('liveContentStream');
       const liveThinkingContainer = document.getElementById('liveThinkingContainer');
-      const liveToolContainer = document.getElementById('liveToolContainer');
       const liveUsage = document.getElementById('liveUsage');
 
       let streamThoughts = assistantMsg.thoughts || '';
@@ -1996,104 +2730,55 @@ note: git commands are strictly prohibited in this environment.</div>
 
                 if (data.type === 'thought') {
                   streamThoughts += data.text;
-                  const curThoughtElem = document.getElementById('liveThoughtStream');
-                  if (curThoughtElem) {
-                    curThoughtElem.classList.remove('hidden');
-                    curThoughtElem.innerText = streamThoughts;
-                    curThoughtElem.scrollTop = curThoughtElem.scrollHeight;
+                  const curThoughtStream = document.getElementById('liveThoughtStream');
+                  const curThoughtChevron = document.getElementById('liveThoughtChevron');
+                  if (curThoughtStream) {
+                    curThoughtStream.classList.remove('hidden');
+                    if (curThoughtChevron) {
+                      curThoughtChevron.classList.remove('hidden');
+                      curThoughtChevron.classList.add('rotate-90');
+                    }
+                  }
+                  const curThoughtBody = document.getElementById('liveStreamThought-body');
+                  if (curThoughtBody) {
+                    curThoughtBody.innerHTML = renderMarkdownSafely(streamThoughts);
+                    curThoughtBody.scrollTop = curThoughtBody.scrollHeight;
                   }
                   messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 } else if (data.type === 'tool_call') {
-                  const curToolElem = document.getElementById('liveToolContainer');
-                  if (curToolElem) {
-                    curToolElem.classList.remove('hidden');
-                    const tcElem = document.createElement('div');
-                    if (data.name === 'run_command') {
-                      const cmd = (data.args && data.args.command) ? data.args.command : (typeof data.args === 'string' ? data.args : '');
-                      const target = (data.args && data.args.target) ? data.args.target : 'local';
-                      tcElem.className = 'rounded-xl bg-[#0e1017] border border-emerald-500/30 overflow-hidden text-xs font-mono mb-1.5 shadow-sm';
-                      tcElem.innerHTML = `
-                        <div class="p-2.5 flex items-center justify-between gap-2">
-                          <div class="flex items-center gap-2 truncate">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                            <span class="text-emerald-400 font-bold">&gt;_</span>
-                            <span class="px-1.5 py-0.5 rounded text-[10px] bg-[#181a26] border border-border text-zinc-400 uppercase">${escapeHtml(target)}</span>
-                            <span class="text-zinc-200 truncate font-semibold">$ ${escapeHtml(cmd || 'run_command')}</span>
-                          </div>
-                          <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 lowercase">running...</span>
-                        </div>
-                      `;
-                    } else {
-                      tcElem.className = 'p-2.5 rounded-xl bg-[#141620] border border-emerald-500/30 text-xs font-mono text-zinc-200 flex items-center justify-between mb-1.5';
-                      tcElem.innerHTML = `
-                        <div class="flex items-center gap-2 truncate">
-                          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                          <span class="text-emerald-400 font-bold">${escapeHtml(data.name)}</span>
-                          <span class="text-zinc-400 truncate max-w-sm">${escapeHtml(JSON.stringify(data.args))}</span>
-                        </div>
-                        <span class="text-[10px] text-zinc-400 lowercase">executing...</span>
-                      `;
-                    }
-                    curToolElem.appendChild(tcElem);
+                  const newTc = {
+                    name: data.name,
+                    args: data.args,
+                    path: (data.args && data.args.path) ? data.args.path : '',
+                    start_line: (data.args && (data.args.start_line || data.args.StartLine)) || null,
+                    end_line: (data.args && (data.args.end_line || data.args.EndLine)) || null,
+                    isLive: true
+                  };
+                  recordedToolCalls.push(newTc);
+
+                  // Update live action tree under thinking header
+                  const treeEl = document.getElementById('liveActionTreeContainer');
+                  if (treeEl) {
+                    treeEl.innerHTML = renderActionTree(recordedToolCalls, 'live', true);
                   }
-                  recordedToolCalls.push({ name: data.name, args: data.args });
                   messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 } else if (data.type === 'tool_result') {
-                  const curToolElem = document.getElementById('liveToolContainer');
-                  if (curToolElem && curToolElem.lastElementChild) {
-                    const lastChild = curToolElem.lastElementChild;
-                    if (data.name === 'run_command') {
-                      const curArgs = (recordedToolCalls.length > 0 && recordedToolCalls[recordedToolCalls.length - 1].args) ? recordedToolCalls[recordedToolCalls.length - 1].args : {};
-                      const cmd = curArgs.command || '';
-                      const target = curArgs.target || 'local';
-                      const output = data.output || data.result_preview || '';
-                      const isProhibited = output.includes('strictly prohibited');
-                      const isError = !isProhibited && (output.startsWith('error') || output.includes('exit code: 1') || output.includes('exit code: 2'));
-                      const badgeColor = isProhibited ? 'text-amber-400 border-amber-500/20 bg-amber-500/10' :
-                                         isError ? 'text-rose-400 border-rose-500/20 bg-rose-500/10' :
-                                         'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
-                      const badgeText = isProhibited ? 'prohibited' : isError ? 'failed' : 'success';
-                      const toolId = 'term-' + Math.random().toString(36).substring(2, 9);
-                      const hasOutput = Boolean(output && output !== 'Success');
-
-                      lastChild.className = 'rounded-xl bg-[#0e1017] border border-border/80 overflow-hidden text-xs font-mono mb-1.5 shadow-sm';
-                      lastChild.innerHTML = `
-                        <div class="p-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-[#141622] transition" onclick="toggleTerminalCollapse('${toolId}')">
-                          <div class="flex items-center gap-2 truncate">
-                            <span class="text-emerald-400 font-bold">&gt;_</span>
-                            <span class="px-1.5 py-0.5 rounded text-[10px] bg-[#181a26] border border-border text-zinc-400 uppercase">${escapeHtml(target)}</span>
-                            <span class="text-zinc-200 truncate font-semibold">$ ${escapeHtml(cmd || 'run_command')}</span>
-                          </div>
-                          <div class="flex items-center gap-2 shrink-0">
-                            <span class="text-[10px] ${badgeColor} px-2 py-0.5 rounded border lowercase">${badgeText}</span>
-                            <svg id="arrow-${toolId}" class="w-3.5 h-3.5 text-zinc-500 transition-transform ${hasOutput ? '' : 'hidden'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                        </div>
-                        ${hasOutput ? `
-                          <div id="body-${toolId}" class="p-3 bg-[#08090d] border-t border-border/60 text-zinc-300 font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto select-text">
-                            ${escapeHtml(output)}
-                          </div>
-                        ` : ''}
-                      `;
-                      if (recordedToolCalls.length > 0) {
-                        recordedToolCalls[recordedToolCalls.length - 1].output = output;
-                      }
-                    } else {
-                      lastChild.className = 'p-2 rounded-xl bg-[#12141c] border border-border text-xs font-mono text-zinc-300 flex items-center justify-between mb-1.5';
-                      lastChild.innerHTML = `
-                        <div class="flex items-center gap-2 truncate">
-                          <span class="text-emerald-400 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-400 shrink-0 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>${escapeHtml(data.name)}</span></span>
-                          <span class="text-zinc-500 truncate max-w-sm">${escapeHtml(data.result_preview || '')}</span>
-                        </div>
-                        <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 lowercase">success</span>
-                      `;
-                    }
-                  }
                   if (recordedToolCalls.length > 0) {
-                    recordedToolCalls[recordedToolCalls.length - 1].result_preview = data.result_preview;
+                    const lastTc = recordedToolCalls[recordedToolCalls.length - 1];
+                    lastTc.result_preview = data.result_preview;
+                    lastTc.output = data.output;
+                    if (data.path) lastTc.path = data.path;
+                    if (data.start_line) lastTc.start_line = data.start_line;
+                    if (data.end_line) lastTc.end_line = data.end_line;
+                    lastTc.isLive = false;
                   }
+
+                  // Update live action tree under thinking header
+                  const treeEl = document.getElementById('liveActionTreeContainer');
+                  if (treeEl) {
+                    treeEl.innerHTML = renderActionTree(recordedToolCalls, 'live', false);
+                  }
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 } else if (data.type === 'content') {
                   const curThinkingContainer = document.getElementById('liveThinkingContainer');
                   if (!thoughtsFinished && streamThoughts) {
@@ -2101,26 +2786,40 @@ note: git commands are strictly prohibited in this environment.</div>
                     clearInterval(timerInterval);
                     const finalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
                     if (curThinkingContainer) {
+                      curThinkingContainer.className = 'mb-4 select-none';
                       curThinkingContainer.innerHTML = `
-                        <button
-                          type="button"
-                          onclick="toggleLiveThought()"
-                          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#171922] hover:bg-[#1e202b] border border-border text-xs text-zinc-400 hover:text-zinc-200 transition"
-                        >
-                          <svg id="liveChevron" class="w-3.5 h-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                          </svg>
-                          <span>Thought for ${finalElapsed}s</span>
-                        </button>
-                        <div id="liveThoughtDrawer" class="hidden mt-2 p-3 rounded-xl bg-[#111218] border border-border text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
-                          ${escapeHtml(streamThoughts)}
+                        <div class="mb-4 select-none">
+                          <div class="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onclick="toggleLiveThoughtFinished()"
+                              class="group inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition"
+                            >
+                              <span>Worked for ${finalElapsed}s</span>
+                              <svg id="liveChevronFinished" class="w-3.5 h-3.5 text-zinc-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div id="liveThoughtDrawerFinished" class="hidden my-2.5">
+                            ${renderGlassThoughtCard(streamThoughts, 'liveFinishedThought', false, finalElapsed + 's')}
+                          </div>
+                          <div id="liveActionTreeContainer">
+                            ${renderActionTree(recordedToolCalls, 'live', false)}
+                          </div>
                         </div>
                       `;
                     }
                   } else if (!thoughtsFinished && !streamThoughts) {
                     thoughtsFinished = true;
                     clearInterval(timerInterval);
-                    if (curThinkingContainer) curThinkingContainer.remove();
+                    if (curThinkingContainer) {
+                      curThinkingContainer.innerHTML = `
+                        <div id="liveActionTreeContainer">
+                          ${renderActionTree(recordedToolCalls, 'live', false)}
+                        </div>
+                      `;
+                    }
                   }
 
                   streamContent += data.text;

@@ -150,13 +150,18 @@ def get_system_instruction():
 
 # --- Workspace Safety & File Helpers ---
 def get_safe_workspace_path(rel_path):
-    rel = rel_path.strip().replace("/", "\\").lstrip("\\")
+    rel_clean = (rel_path or "").strip().strip("'\"")
+    if os.path.isabs(rel_clean):
+        norm = os.path.normpath(rel_clean)
+        if (WORKSPACE_ROOT and norm.lower().startswith(WORKSPACE_ROOT.lower())) or norm.lower().startswith("c:\\tools"):
+            return norm
+    rel = rel_clean.replace("/", "\\").lstrip("\\")
     full = os.path.normpath(os.path.join(WORKSPACE_ROOT, rel))
-    if not full.lower().startswith(WORKSPACE_ROOT.lower()):
+    if not ((WORKSPACE_ROOT and full.lower().startswith(WORKSPACE_ROOT.lower())) or full.lower().startswith("c:\\tools")):
         raise PermissionError(f"Access denied: path outside workspace ({rel_path})")
     return full
 
-def read_workspace_file_content(rel_path):
+def read_workspace_file_content(rel_path, start_line=None, end_line=None):
     full = get_safe_workspace_path(rel_path)
     if not os.path.exists(full):
         return f"Error: File '{rel_path}' does not exist in {WORKSPACE_ROOT}."
@@ -164,9 +169,27 @@ def read_workspace_file_content(rel_path):
         return f"Error: '{rel_path}' is a directory, not a file."
     try:
         with open(full, "r", encoding="utf-8", errors="replace") as f:
-            return f.read()
+            all_lines = f.readlines()
+        total = len(all_lines)
+        if start_line is not None or end_line is not None:
+            s = max(1, int(start_line)) if start_line else 1
+            e = min(total, int(end_line)) if end_line else total
+            sliced = "".join(all_lines[s-1:e])
+            return f"--- '{rel_path}' (lines {s}-{e} of {total}) ---\n" + sliced
+        else:
+            return "".join(all_lines)
     except Exception as e:
         return f"Error reading file '{rel_path}': {str(e)}"
+
+def get_file_line_count(rel_path):
+    try:
+        full = get_safe_workspace_path(rel_path)
+        if os.path.isfile(full):
+            with open(full, "r", encoding="utf-8", errors="replace") as f:
+                return sum(1 for _ in f)
+    except Exception:
+        pass
+    return None
 
 def write_workspace_file_content(rel_path, content):
     full = get_safe_workspace_path(rel_path)
@@ -305,11 +328,13 @@ def execute_terminal_command(command, target="local", timeout=90):
 WORKSPACE_TOOL_DECLARATIONS = [
     types.FunctionDeclaration(
         name="read_file",
-        description="Read the full contents of a file in the workspace.",
+        description="Read the contents of a file in the workspace. Optionally specify a line range (start_line, end_line).",
         parameters=types.Schema(
             type="OBJECT",
             properties={
-                "path": types.Schema(type="STRING", description="Relative file path in workspace")
+                "path": types.Schema(type="STRING", description="Relative file path in workspace"),
+                "start_line": types.Schema(type="INTEGER", description="Optional 1-based start line"),
+                "end_line": types.Schema(type="INTEGER", description="Optional 1-based end line")
             },
             required=["path"]
         )
@@ -377,7 +402,10 @@ WORKSPACE_TOOL_DECLARATIONS = [
 
 def execute_workspace_tool(name, args):
     if name == "read_file":
-        return read_workspace_file_content(args.get("path", ""))
+        path = args.get("path", "")
+        start_line = args.get("start_line") or args.get("StartLine")
+        end_line = args.get("end_line") or args.get("EndLine")
+        return read_workspace_file_content(path, start_line, end_line)
     elif name == "edit_file":
         return edit_workspace_file_content(args.get("path", ""), args.get("target", ""), args.get("replacement", ""))
     elif name == "write_file":
@@ -521,10 +549,25 @@ def get_workspace_file():
     path = request.args.get("path", "")
     if not path:
         return jsonify({"error": "Missing path parameter"}), 400
-    content = read_workspace_file_content(path)
-    if content.startswith("Error:"):
-        return jsonify({"error": content}), 404
-    return jsonify({"path": path, "content": content, "length": len(content)})
+    try:
+        full = get_safe_workspace_path(path)
+        if not os.path.exists(full):
+            return jsonify({"error": f"File '{path}' does not exist"}), 404
+        if os.path.isdir(full):
+            return jsonify({"error": f"'{path}' is a directory"}), 400
+        with open(full, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        lines = content.splitlines()
+        rel_display = os.path.relpath(full, WORKSPACE_ROOT).replace("\\", "/") if (WORKSPACE_ROOT and full.lower().startswith(WORKSPACE_ROOT.lower())) else full
+        return jsonify({
+            "path": rel_display,
+            "full_path": full,
+            "content": content,
+            "lines": lines,
+            "lines_count": len(lines)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/workspace/apply", methods=["POST"])
 def apply_to_workspace():
@@ -851,20 +894,61 @@ def run_generation_worker(cid, model, thinking_level, effective_instruction, for
                 exec_result = execute_workspace_tool(fn_name, fn_args)
                 preview = exec_result[:400] + ("..." if len(exec_result) > 400 else "")
 
+                # Line range & diff calculation
+                start_line = fn_args.get("start_line") or fn_args.get("StartLine")
+                end_line = fn_args.get("end_line") or fn_args.get("EndLine")
+                target_path = fn_args.get("path", "")
+                lines_added = None
+                lines_removed = None
+
+                if fn_name == "read_file" and not end_line and target_path:
+                    try:
+                        line_count = get_file_line_count(target_path)
+                        if line_count:
+                            start_line = start_line or 1
+                            end_line = line_count
+                    except Exception:
+                        pass
+                elif fn_name == "edit_file":
+                    t_str = fn_args.get("target", "")
+                    r_str = fn_args.get("replacement", "")
+                    import difflib
+                    t_lines = t_str.splitlines(keepends=True) if t_str else []
+                    r_lines = r_str.splitlines(keepends=True) if r_str else []
+                    diff = list(difflib.ndiff(t_lines, r_lines))
+                    lines_added = sum(1 for d in diff if d.startswith('+ '))
+                    lines_removed = sum(1 for d in diff if d.startswith('- '))
+                elif fn_name == "write_file":
+                    c_str = fn_args.get("content", "")
+                    lines_added = len(c_str.splitlines()) if c_str else 0
+                    lines_removed = 0
+
+                tc_item = {
+                    "name": fn_name,
+                    "args": fn_args,
+                    "result_preview": preview,
+                    "output": exec_result[:8000] if fn_name == "run_command" else preview,
+                    "path": target_path,
+                    "start_line": start_line,
+                    "end_line": end_line,
+                    "lines_added": lines_added,
+                    "lines_removed": lines_removed
+                }
+
                 emit_job_event(cid, {
                     "type": "tool_result",
                     "name": fn_name,
                     "result_preview": preview,
                     "output": exec_result[:8000] if fn_name == "run_command" else preview,
-                    "full_length": len(exec_result)
+                    "full_length": len(exec_result),
+                    "path": target_path,
+                    "start_line": start_line,
+                    "end_line": end_line,
+                    "lines_added": lines_added,
+                    "lines_removed": lines_removed
                 })
 
-                model_msg.setdefault("toolCalls", []).append({
-                    "name": fn_name,
-                    "args": fn_args,
-                    "result_preview": preview,
-                    "output": exec_result[:8000] if fn_name == "run_command" else preview
-                })
+                model_msg.setdefault("toolCalls", []).append(tc_item)
                 persist_progress(force=True)
 
                 tool_response_parts.append(
