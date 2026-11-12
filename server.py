@@ -138,7 +138,8 @@ def get_system_instruction():
     lines.extend([
         "- Use run_command autonomously to run scripts, compile code, test builds, or check outputs whenever needed.",
         "- Strict Constraint: Never run git commands under any circumstances (git commands are disabled by project policy).\n",
-        "Autonomy Instructions:",
+        "Autonomy & Execution Instructions:",
+        "You have completely unlimited tool calls and tool rounds. Execute as many actions and rounds as necessary to complete entire tasks end-to-end without stopping prematurely.",
         "When the user gives high-level requests, autonomously identify the relevant file(s), read them using read_file to understand existing state, ",
         "modify or create files using edit_file/write_file, and execute terminal commands using run_command to verify your work. ",
         "Never ask the user to run commands or provide file paths unless genuinely unable to proceed after searching.",
@@ -884,7 +885,6 @@ def run_generation_worker(cid, model, thinking_level, effective_instruction, for
     total_input_tokens = 0
     total_output_tokens = 0
     current_contents = list(formatted_contents)
-    max_tool_rounds = 30
     round_count = 0
     last_function_calls = []
     last_save_time = time.time()
@@ -903,7 +903,7 @@ def run_generation_worker(cid, model, thinking_level, effective_instruction, for
             last_save_time = now
 
     try:
-        while round_count < max_tool_rounds:
+        while True:
             if job.get("stop_requested"):
                 break
 
@@ -1059,11 +1059,11 @@ def run_generation_worker(cid, model, thinking_level, effective_instruction, for
             current_contents.append(types.Content(role="model", parts=accumulated_model_parts))
             current_contents.append(types.Content(role="user", parts=tool_response_parts))
 
-        # Synthesis fallback if needed
-        if round_count >= max_tool_rounds and last_function_calls and not job.get("stop_requested"):
+        # Synthesis fallback if needed (if tool loop ended without final response text)
+        if last_function_calls and not model_msg.get("text") and not job.get("stop_requested"):
             current_contents.append(types.Content(
                 role="user",
-                parts=[types.Part.from_text(text="You have completed your workspace exploration rounds. Now synthesize everything you found, answer the user thoroughly, and output your complete response and any code changes.")]
+                parts=[types.Part.from_text(text="Synthesize everything you found and accomplished, answer the user thoroughly, and output your complete response and any code changes.")]
             ))
             synthesis_config_args = dict(config_args)
             synthesis_config_args.pop("tools", None)
