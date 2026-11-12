@@ -235,28 +235,124 @@ def list_workspace_dir_entries(rel_path=""):
     except Exception as e:
         return f"Error listing directory '{rel_path}': {str(e)}"
 
-def search_workspace_code_entries(query, ext=""):
-    results = []
-    q_lower = query.lower()
+SEARCH_CACHE = {}
+SEARCH_CACHE_LOCK = threading.Lock()
+SEARCH_CACHE_TTL = 60.0  # seconds
+
+EXCLUDE_DIRS = {
+    ".git", ".next", "node_modules", "cache", "__pycache__", ".devbox_credentials",
+    "build", ".gradle", "target", ".idea", ".vscode", "dist", "out", "bin", "obj",
+    "libraries", "versions", "world", "world_nether", "world_the_end", "logs", ".paper-remapped"
+}
+
+ALLOWED_CODE_EXTENSIONS = {
+    ".java", ".ts", ".tsx", ".js", ".jsx", ".json", ".md", ".yml", ".yaml",
+    ".toml", ".xml", ".css", ".scss", ".html", ".sql", ".sh", ".py", ".txt",
+    ".properties", ".cfg", ".conf", ".gradle", ".env", ".cmd", ".bat", ".rs", ".go", ".c", ".cpp", ".h"
+}
+
+def search_workspace_code_entries(query, ext="", stop_check=None):
+    if not query or not query.strip():
+        return "Error: Empty search query."
+
+    clean_query = query.strip()
+    cache_key = (clean_query.lower(), ext.lower(), WORKSPACE_ROOT)
+    now = time.time()
+
+    with SEARCH_CACHE_LOCK:
+        if cache_key in SEARCH_CACHE:
+            cached_time, cached_res = SEARCH_CACHE[cache_key]
+            if now - cached_time < SEARCH_CACHE_TTL:
+                return cached_res
+
+    # Fast path: Remote VPS grep if workspace is on V:\ or SSH target is configured
+    is_vps_ws = WORKSPACE_ROOT.lower().startswith("v:") or bool(load_settings().get("vps_ssh_target"))
+    if is_vps_ws:
+        try:
+            settings = load_settings()
+            vps_host = settings.get("vps_ssh_target", "vps")
+            vps_dir = settings.get("vps_remote_dir", "/home/ownerv")
+            if vps_host:
+                rel_ws = ""
+                if WORKSPACE_ROOT.lower().startswith("v:"):
+                    rel_ws = os.path.relpath(WORKSPACE_ROOT, "V:\\").replace("\\", "/")
+                target_remote = vps_dir if (not rel_ws or rel_ws == ".") else f"{vps_dir.rstrip('/')}/{rel_ws}"
+
+                safe_q = clean_query.replace("'", "'\\''")
+                include_flag = f"--include=*{ext}" if ext else ""
+                exclude_flags = "--exclude-dir={.git,.next,node_modules,build,.gradle,target,.idea,.vscode,dist,out,bin,obj,cache,__pycache__,libraries,versions,world,world_nether,world_the_end,logs,.paper-remapped}"
+                cmd = f"cd {target_remote} && grep -rIn -I {exclude_flags} {include_flag} -i '{safe_q}' . 2>/dev/null | head -n 40"
+
+                res = subprocess.run(["ssh", "-T", vps_host, cmd], capture_output=True, text=True, timeout=10)
+                out = (res.stdout or "").strip()
+                if out:
+                    lines = []
+                    for line in out.splitlines():
+                        clean_line = line[2:] if line.startswith("./") else line
+                        lines.append(clean_line[:140])
+                    result_str = "\n".join(lines)
+                    if len(lines) >= 40:
+                        result_str += "\n... (more matches truncated)"
+                else:
+                    result_str = f"No matches found for '{query}'."
+
+                with SEARCH_CACHE_LOCK:
+                    SEARCH_CACHE[cache_key] = (now, result_str)
+                return result_str
+        except Exception:
+            pass
+
+    # Local file walk fallback with strict pruning, extension check and timeout
     if not os.path.exists(WORKSPACE_ROOT):
         return f"Error: Workspace '{WORKSPACE_ROOT}' does not exist."
+
+    results = []
+    q_lower = clean_query.lower()
+    start_search_time = time.time()
+    max_search_duration = 10.0
+
     for root, dirs, files in os.walk(WORKSPACE_ROOT):
-        dirs[:] = [d for d in dirs if d not in (".next", "node_modules", ".git", "cache", "__pycache__", ".devbox_credentials")]
+        if stop_check and stop_check():
+            return "Search canceled."
+        if time.time() - start_search_time > max_search_duration:
+            results.append("... [Search timed out after 10s; more matches may exist]")
+            break
+
+        dirs[:] = [d for d in dirs if d.lower() not in EXCLUDE_DIRS and not d.startswith(".")]
+
         for fname in files:
-            if ext and not fname.endswith(ext):
+            if stop_check and stop_check():
+                return "Search canceled."
+
+            fname_lower = fname.lower()
+            if ext and not fname_lower.endswith(ext.lower()):
                 continue
+
+            f_ext = os.path.splitext(fname_lower)[1]
+            if f_ext not in ALLOWED_CODE_EXTENSIONS and ext == "":
+                continue
+
             full = os.path.join(root, fname)
-            rel = os.path.relpath(full, WORKSPACE_ROOT)
             try:
+                if os.path.getsize(full) > 1024 * 1024:
+                    continue
+                rel = os.path.relpath(full, WORKSPACE_ROOT)
                 with open(full, "r", encoding="utf-8", errors="ignore") as f:
                     for lno, line in enumerate(f, 1):
                         if q_lower in line.lower():
                             results.append(f"{rel}:{lno}: {line.strip()[:100]}")
                             if len(results) >= 40:
-                                return "\n".join(results) + "\n... (more matches truncated)"
+                                res_text = "\n".join(results) + "\n... (more matches truncated)"
+                                with SEARCH_CACHE_LOCK:
+                                    SEARCH_CACHE[cache_key] = (now, res_text)
+                                return res_text
             except Exception:
                 continue
-    return "\n".join(results) if results else f"No matches found for '{query}'."
+
+    result_str = "\n".join(results) if results else f"No matches found for '{query}'."
+    with SEARCH_CACHE_LOCK:
+        SEARCH_CACHE[cache_key] = (now, result_str)
+    return result_str
 
 def is_git_command(cmd_str):
     if re.search(r'(^|[\s;&|])git(\.exe)?([\s;&|]|$)', cmd_str, re.IGNORECASE):
@@ -400,7 +496,7 @@ WORKSPACE_TOOL_DECLARATIONS = [
     )
 ]
 
-def execute_workspace_tool(name, args):
+def execute_workspace_tool(name, args, stop_check=None):
     if name == "read_file":
         path = args.get("path", "")
         start_line = args.get("start_line") or args.get("StartLine")
@@ -413,7 +509,7 @@ def execute_workspace_tool(name, args):
     elif name == "list_directory":
         return list_workspace_dir_entries(args.get("path", ""))
     elif name == "search_code":
-        return search_workspace_code_entries(args.get("query", ""), args.get("extension", ""))
+        return search_workspace_code_entries(args.get("query", ""), args.get("extension", ""), stop_check=stop_check)
     elif name == "run_command":
         return execute_terminal_command(args.get("command", ""), args.get("target", "local"))
     else:
@@ -891,7 +987,9 @@ def run_generation_worker(cid, model, thinking_level, effective_instruction, for
                 if job.get("stop_requested"):
                     break
                 emit_job_event(cid, {"type": "tool_call", "name": fn_name, "args": fn_args})
-                exec_result = execute_workspace_tool(fn_name, fn_args)
+                exec_result = execute_workspace_tool(fn_name, fn_args, stop_check=lambda: job.get("stop_requested", False))
+                if job.get("stop_requested"):
+                    break
                 preview = exec_result[:400] + ("..." if len(exec_result) > 400 else "")
 
                 # Line range & diff calculation
@@ -1107,21 +1205,51 @@ def chat():
                     pass
             elif ftext is not None:
                 parts.append(types.Part.from_text(text=f"\n--- Attached file: {fname} ---\n{ftext}\n--- End of {fname} ---\n"))
+
+        # Context preservation for interrupted model turns
+        if role == "model" and not text:
+            tool_calls = msg.get("toolCalls") or []
+            if tool_calls:
+                tc_summary = ["Workspace actions completed in this step:"]
+                for tc in tool_calls:
+                    tc_name = tc.get("name", "tool")
+                    tc_target = tc.get("path") or tc.get("args", {}).get("path") or tc.get("args", {}).get("command") or tc.get("args", {}).get("query") or ""
+                    tc_res = (tc.get("result_preview") or "")[:150]
+                    tc_summary.append(f"- `{tc_name}`({tc_target}): {tc_res}")
+                tc_summary.append("(Turn was stopped before final synthesis.)")
+                parts.append(types.Part.from_text(text="\n".join(tc_summary)))
+            else:
+                parts.append(types.Part.from_text(text="[Execution stopped]"))
+
         if parts:
-            formatted_contents.append(types.Content(role=role, parts=parts))
+            if formatted_contents and formatted_contents[-1].role == role:
+                formatted_contents[-1].parts.extend(parts)
+            else:
+                formatted_contents.append(types.Content(role=role, parts=parts))
 
     job = get_or_create_job(cid)
 
+    # Stop any previous generation and clear old events synchronously so previous turn is never replayed!
     with ACTIVE_JOBS_LOCK:
-        is_running = (job["status"] == "running")
+        job["stop_requested"] = True
+        job["status"] = "idle"
+        for q in list(job.get("subscribers", [])):
+            try:
+                q.put_nowait({"type": "error", "message": "Starting new turn."})
+            except Exception:
+                pass
+        job["subscribers"].clear()
+        job["events"] = []  # Cleared synchronously so stream_subscriber sees an empty event list!
+        job["status"] = "running"
+        job["stop_requested"] = False
+        job["started_at"] = time.time()
 
-    if not is_running:
-        worker_thread = threading.Thread(
-            target=run_generation_worker,
-            args=(cid, model, thinking_level, effective_instruction, formatted_contents, enable_tools),
-            daemon=True
-        )
-        worker_thread.start()
+    worker_thread = threading.Thread(
+        target=run_generation_worker,
+        args=(cid, model, thinking_level, effective_instruction, formatted_contents, enable_tools),
+        daemon=True
+    )
+    worker_thread.start()
 
     def stream_subscriber():
         q = queue.Queue()
@@ -1212,8 +1340,14 @@ def abort_chat():
     if cid:
         with ACTIVE_JOBS_LOCK:
             job = ACTIVE_JOBS.get(cid)
-            if job and job["status"] == "running":
+            if job:
                 job["stop_requested"] = True
+                job["status"] = "idle"
+                for q in list(job.get("subscribers", [])):
+                    try:
+                        q.put_nowait({"type": "error", "message": "Stopped by user."})
+                    except Exception:
+                        pass
     return jsonify({"success": True})
 
 if __name__ == "__main__":

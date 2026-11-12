@@ -2685,6 +2685,7 @@ note: git commands are strictly prohibited in this environment.</div>
           const contentsPayload = contextSlice.map(m => {
             const item = { role: m.role, text: m.text };
             if (m.files && m.files.length > 0) item.files = m.files;
+            if (m.toolCalls && m.toolCalls.length > 0) item.toolCalls = m.toolCalls;
             return item;
           });
 
