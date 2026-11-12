@@ -137,7 +137,8 @@ def get_system_instruction():
         lines.append(f"- If target='vps', commands execute on the remote host '{vps_target}' in directory '{vps_dir}'.")
     lines.extend([
         "- Use run_command autonomously to run scripts, compile code, test builds, or check outputs whenever needed.",
-        "- Strict Constraint: Never run git commands under any circumstances (git commands are disabled by project policy).\n",
+        "- Strict Constraint: Never run git commands under any circumstances (git commands are disabled by project policy).",
+        "- Tool Calling Rule: Never output fake execution logs or 'Workspace actions completed' in your text response. Always execute real actions by invoking the function calls (run_command, read_file, edit_file, write_file), and only communicate with the user using clear, natural explanations.\n",
         "Autonomy & Execution Instructions:",
         "You have completely unlimited tool calls and tool rounds. Execute as many actions and rounds as necessary to complete entire tasks end-to-end without stopping prematurely.",
         "When the user gives high-level requests, autonomously identify the relevant file(s), read them using read_file to understand existing state, ",
@@ -1189,8 +1190,18 @@ def chat():
         role = msg.get("role", "user")
         if role not in ("user", "model"):
             role = "user"
+
+        text = msg.get("text", "") or ""
+
+        # Strip any hallucinated repetition from prior contaminated turns
+        if role == "model" and "Workspace actions completed in this step:" in text:
+            text = text.split("Workspace actions completed in this step:")[0].strip()
+
+        # If a model turn has no text (e.g. was interrupted), skip it so user messages flow naturally
+        if role == "model" and not text:
+            continue
+
         parts = []
-        text = msg.get("text", "")
         if text:
             parts.append(types.Part.from_text(text=text))
         for f in msg.get("files", []):
@@ -1205,21 +1216,6 @@ def chat():
                     pass
             elif ftext is not None:
                 parts.append(types.Part.from_text(text=f"\n--- Attached file: {fname} ---\n{ftext}\n--- End of {fname} ---\n"))
-
-        # Context preservation for interrupted model turns
-        if role == "model" and not text:
-            tool_calls = msg.get("toolCalls") or []
-            if tool_calls:
-                tc_summary = ["Workspace actions completed in this step:"]
-                for tc in tool_calls:
-                    tc_name = tc.get("name", "tool")
-                    tc_target = tc.get("path") or tc.get("args", {}).get("path") or tc.get("args", {}).get("command") or tc.get("args", {}).get("query") or ""
-                    tc_res = (tc.get("result_preview") or "")[:150]
-                    tc_summary.append(f"- `{tc_name}`({tc_target}): {tc_res}")
-                tc_summary.append("(Turn was stopped before final synthesis.)")
-                parts.append(types.Part.from_text(text="\n".join(tc_summary)))
-            else:
-                parts.append(types.Part.from_text(text="[Execution stopped]"))
 
         if parts:
             if formatted_contents and formatted_contents[-1].role == role:
