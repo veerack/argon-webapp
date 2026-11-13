@@ -481,6 +481,14 @@
                   <span id="toolsToggleLabel">Tools Active</span>
                 </button>
 
+                <!-- MCP Integration Button -->
+                <button id="mcpToggleBtn" type="button" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-xs text-indigo-400 transition" title="Manage Model Context Protocol (MCP) servers">
+                  <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span id="mcpToggleLabel">MCP (86 tools)</span>
+                </button>
+
               </div>
 
               <!-- Right Toolbar: Circular Blue Send Button -->
@@ -718,6 +726,60 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Model Context Protocol (MCP) Modal -->
+  <div id="mcpModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-surface border border-borderLight rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <!-- Header -->
+      <div class="p-4 border-b border-border flex items-center justify-between bg-[#12141c]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400">
+            <svg class="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">Model Context Protocol (MCP) Hub</h3>
+            <p class="text-[11px] text-zinc-400">Auto-discovers locally installed MCP tools and exposes them to Argon &amp; Carbon.</p>
+          </div>
+        </div>
+        <button id="closeMcpModalBtn" class="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/5 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs select-text">
+        <div class="flex items-center justify-between pb-2 border-b border-border/60">
+          <div>
+            <span class="text-zinc-200 font-medium text-xs">Active &amp; Discovered MCP Servers</span>
+            <p class="text-[11px] text-zinc-500 mt-0.5">Scanned automatically from <code class="text-zinc-400">~/mcps</code> and Gemini configurations.</p>
+          </div>
+          <button id="rescanMcpBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs text-zinc-200 transition shadow-sm">
+            <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Rescan MCPs</span>
+          </button>
+        </div>
+
+        <!-- MCP Server Cards Container -->
+        <div id="mcpServersList" class="space-y-3">
+          <div class="text-center py-8 text-zinc-500">Loading installed MCP servers...</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-3.5 bg-[#0e1017] border-t border-border flex items-center justify-between">
+        <span class="text-[11px] text-zinc-500">Blockbench bridge: <code class="text-zinc-400">%APPDATA%\Blockbench\plugins\blockbench_mcp.js</code></span>
+        <button id="closeMcpModalFooterBtn" type="button" class="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition border border-zinc-700">
+          Done
+        </button>
+      </div>
     </div>
   </div>
 
@@ -3126,9 +3188,141 @@ note: git commands are strictly prohibited in this environment.</div>
       });
     }
 
+    // --- Model Context Protocol (MCP) Client Handlers ---
+    const mcpToggleBtn = document.getElementById('mcpToggleBtn');
+    const mcpToggleLabel = document.getElementById('mcpToggleLabel');
+    const mcpModal = document.getElementById('mcpModal');
+    const closeMcpModalBtn = document.getElementById('closeMcpModalBtn');
+    const closeMcpModalFooterBtn = document.getElementById('closeMcpModalFooterBtn');
+    const rescanMcpBtn = document.getElementById('rescanMcpBtn');
+    const mcpServersList = document.getElementById('mcpServersList');
+
+    let mcpServersData = [];
+
+    function openMcpModal() {
+      if (mcpModal) mcpModal.classList.remove('hidden');
+      loadMcpServers();
+    }
+
+    function closeMcpModal() {
+      if (mcpModal) mcpModal.classList.add('hidden');
+    }
+
+    if (mcpToggleBtn) mcpToggleBtn.addEventListener('click', openMcpModal);
+    if (closeMcpModalBtn) closeMcpModalBtn.addEventListener('click', closeMcpModal);
+    if (closeMcpModalFooterBtn) closeMcpModalFooterBtn.addEventListener('click', closeMcpModal);
+
+    if (rescanMcpBtn) {
+      rescanMcpBtn.addEventListener('click', async () => {
+        rescanMcpBtn.disabled = true;
+        rescanMcpBtn.innerHTML = `
+          <svg class="w-3.5 h-3.5 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Rescanning...</span>
+        `;
+        try {
+          const res = await fetch('/api/mcp/rescan', { method: 'POST' });
+          const data = await res.json();
+          renderMcpServers(data.servers, data.total_tools);
+        } catch (e) {
+          console.error('Error rescanning MCP servers', e);
+        } finally {
+          rescanMcpBtn.disabled = false;
+          rescanMcpBtn.innerHTML = `
+            <svg class="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Rescan MCPs</span>
+          `;
+        }
+      });
+    }
+
+    async function loadMcpServers() {
+      try {
+        const res = await fetch('/api/mcp/servers');
+        const data = await res.json();
+        mcpServersData = data.servers || [];
+        renderMcpServers(mcpServersData, data.total_tools);
+      } catch (e) {
+        console.error('Failed to load MCP servers', e);
+      }
+    }
+
+    function renderMcpServers(servers, totalTools) {
+      const activeCount = servers.filter(s => s.enabled).length;
+      if (mcpToggleLabel) {
+        mcpToggleLabel.innerText = activeCount > 0 ? `MCP (${totalTools || 0} tools)` : 'MCP (Disabled)';
+      }
+      if (mcpToggleBtn) {
+        if (activeCount > 0) {
+          mcpToggleBtn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-xs text-indigo-400 transition';
+        } else {
+          mcpToggleBtn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-border text-xs text-zinc-400 transition';
+        }
+      }
+
+      if (!mcpServersList) return;
+      if (!servers || servers.length === 0) {
+        mcpServersList.innerHTML = `
+          <div class="text-center py-8 text-zinc-500">
+            No MCP servers found. Place MCP projects in <code class="text-zinc-400">~/mcps/</code> or configure in Gemini.
+          </div>
+        `;
+        return;
+      }
+
+      mcpServersList.innerHTML = servers.map(s => `
+        <div class="p-3.5 rounded-xl bg-[#0d0f16] border ${s.enabled ? 'border-indigo-500/30' : 'border-border/80'} transition">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5">
+              <div class="w-8 h-8 rounded-lg ${s.enabled ? 'bg-indigo-500/20 text-indigo-300' : 'bg-zinc-800 text-zinc-500'} flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                ${s.id === 'blockbench' ? '3D' : s.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-white text-xs">${escapeHtml(s.name)}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-mono ${s.enabled ? 'bg-indigo-500/20 text-indigo-300' : 'bg-zinc-800 text-zinc-500'}">
+                    ${s.tools_count || 0} tools
+                  </span>
+                  ${s.id === 'blockbench' ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 font-mono">Port 8787</span>' : ''}
+                </div>
+                <p class="text-[11px] text-zinc-400 mt-1 leading-relaxed">${escapeHtml(s.description || 'Model Context Protocol Server')}</p>
+                ${s.id === 'blockbench' ? `
+                  <div class="mt-2 text-[10px] text-zinc-500 font-mono flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>Plugin bridge installed in Blockbench AppData</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+              <input type="checkbox" class="sr-only peer" ${s.enabled ? 'checked' : ''} onchange="toggleMcpServer('${s.id}', this.checked)">
+              <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.toggleMcpServer = async function(serverId, enabled) {
+      try {
+        const res = await fetch('/api/mcp/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ server_id: serverId, enabled: enabled })
+        });
+        await loadMcpServers();
+      } catch (e) {
+        console.error('Error toggling MCP server', e);
+      }
+    };
+
     // Init: Load conversations & open latest or start new
     async function init() {
       await loadStudioSettings();
+      await loadMcpServers();
       await loadConversationsList();
       if (conversations.length > 0) {
         await switchConversation(conversations[0].id);

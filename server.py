@@ -30,6 +30,9 @@ except ImportError:
 
 app = Flask(__name__, static_folder=".")
 
+# Import local Model Context Protocol (MCP) manager
+from mcp_manager import mcp_mgr
+
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 CONVOS_FILE = DATA_DIR / "conversations.json"
@@ -141,13 +144,35 @@ def get_system_instruction():
         "- Tool Calling Rule: Never output fake execution logs or 'Workspace actions completed' in your text response. Always execute real actions by invoking the function calls (run_command, read_file, edit_file, write_file), and only communicate with the user using clear, natural explanations.\n",
         "Autonomy & Execution Instructions:",
         "You have completely unlimited tool calls and tool rounds. Execute as many actions and rounds as necessary to complete entire tasks end-to-end without stopping prematurely.",
-        "When the user gives high-level requests, autonomously identify the relevant file(s), read them using read_file to understand existing state, ",
-        "modify or create files using edit_file/write_file, and execute terminal commands using run_command to verify your work. ",
-        "Never ask the user to run commands or provide file paths unless genuinely unable to proceed after searching.",
-        "Always provide your complete, detailed analysis and full implementation without truncating or cutting responses short."
+        "\nStrict Action Bias (Zero Analysis Paralysis):",
+        "- Do NOT get trapped in endless exploratory, reading, or searching loops without making progress.",
+        "- Limit preliminary reading to what is strictly necessary (at most 2-4 targeted reads/searches). As soon as you identify the relevant files, IMMEDIATELY begin writing or modifying code with edit_file / write_file or executing necessary commands.",
+        "- Do NOT wander off investigating internal package files, system leveldb databases, or tool implementations unless specifically asked.",
+        "- Every coding turn MUST result in concrete file modifications written to disk, followed by verification commands (e.g., compile/build/test).",
+        "\nGrounded Truth & Anti-Hallucination:",
+        "- NEVER claim that a feature is implemented, compiled, deployed, or restarted unless you ACTUALLY called edit_file, write_file, or run_command in this turn and saw them succeed.",
+        "- If you have only inspected files, be completely honest: state what you found and what changes you are about to make. Never fabricate commit hashes, SHA1 checksums, or deploy logs.",
+        "- Always provide your complete, detailed analysis and full implementation without truncating or cutting responses short."
     ])
     if custom and custom.strip():
         lines.append(f"\nUser Project Guidelines:\n{custom.strip()}")
+
+    # Live MCP Integrations
+    try:
+        active_mcp_servers = [s for s in mcp_mgr.get_servers_status() if s.get("enabled")]
+        if active_mcp_servers:
+            lines.append("\nActive Model Context Protocol (MCP) Integrations:")
+            for s in active_mcp_servers:
+                s_name = s.get("name", s.get("id"))
+                s_desc = s.get("description", "")
+                s_cnt = s.get("tools_count", 0)
+                lines.append(f"- {s_name} ({s_cnt} live tools): {s_desc}")
+            lines.append(
+                "When the user's request involves 3D modeling, Minecraft models/textures/rigs/animations in Blockbench, or other active MCP systems, autonomously invoke the respective MCP tools to inspect, create, modify, or export assets directly."
+            )
+    except Exception:
+        pass
+
     return "\n".join(lines)
 
 # --- Workspace Safety & File Helpers ---
@@ -514,6 +539,8 @@ def execute_workspace_tool(name, args, stop_check=None):
         return search_workspace_code_entries(args.get("query", ""), args.get("extension", ""), stop_check=stop_check)
     elif name == "run_command":
         return execute_terminal_command(args.get("command", ""), args.get("target", "local"))
+    elif mcp_mgr.has_tool(name):
+        return mcp_mgr.call_tool(name, args)
     else:
         return f"Error: Unknown tool '{name}'."
 
@@ -792,6 +819,33 @@ def run_terminal():
     result = execute_terminal_command(command, target)
     return jsonify({"command": command, "target": target, "result": result})
 
+# --- Model Context Protocol (MCP) Endpoints ---
+@app.route("/api/mcp/servers", methods=["GET"])
+def get_mcp_servers():
+    servers = mcp_mgr.get_servers_status()
+    decls = mcp_mgr.get_gemini_declarations()
+    return jsonify({
+        "servers": servers,
+        "total_tools": len(decls)
+    })
+
+@app.route("/api/mcp/toggle", methods=["POST"])
+def toggle_mcp():
+    data = request.get_json(force=True)
+    sid = data.get("server_id")
+    enabled = data.get("enabled")
+    ok, new_state = mcp_mgr.toggle_server(sid, enabled)
+    return jsonify({"success": ok, "server_id": sid, "enabled": new_state})
+
+@app.route("/api/mcp/rescan", methods=["POST"])
+def rescan_mcp():
+    servers = mcp_mgr.rescan()
+    decls = mcp_mgr.get_gemini_declarations()
+    return jsonify({
+        "servers": servers,
+        "total_tools": len(decls)
+    })
+
 # --- Active Generation Background Manager ---
 ACTIVE_JOBS = {}
 ACTIVE_JOBS_LOCK = threading.Lock()
@@ -838,7 +892,13 @@ def run_generation_worker(cid, model, thinking_level, effective_instruction, for
         "max_output_tokens": 65536
     }
     if enable_tools:
-        config_args["tools"] = [types.Tool(function_declarations=WORKSPACE_TOOL_DECLARATIONS)]
+        all_decls = list(WORKSPACE_TOOL_DECLARATIONS)
+        try:
+            mcp_decls = mcp_mgr.get_gemini_declarations()
+            all_decls.extend(mcp_decls)
+        except Exception as e:
+            print(f"Error loading MCP tool declarations: {e}")
+        config_args["tools"] = [types.Tool(function_declarations=all_decls)]
 
     if thinking_level and thinking_level != "off":
         config_args["thinking_config"] = types.ThinkingConfig(
@@ -1193,9 +1253,12 @@ def chat():
 
         text = msg.get("text", "") or ""
 
-        # Strip any hallucinated repetition from prior contaminated turns
-        if role == "model" and "Workspace actions completed in this step:" in text:
-            text = text.split("Workspace actions completed in this step:")[0].strip()
+        # Strip any hallucinated repetition or fake action summaries from prior contaminated turns
+        if role == "model" and text:
+            # Strip any variation of fake workspace actions logs
+            text = re.sub(r'(?is)workspace actions completed.*', '', text).strip()
+            # Strip fake bulleted tool lines if generated in text
+            text = re.sub(r'(?m)^[-*•]\s*`?(?:read_file|write_file|edit_file|run_command|list_directory|search_code)`?\(.*?\):?.*$', '', text).strip()
 
         # If a model turn has no text (e.g. was interrupted), skip it so user messages flow naturally
         if role == "model" and not text:
